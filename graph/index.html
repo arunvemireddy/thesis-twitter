@@ -70,16 +70,9 @@
 <script type="text/javascript">
 
     var finaldata;
-    var snodes;
-    var snodesBG;
-    var snodesSelected;
-    var sedges;
     var force;
     var slider;
     var tnodes;
-    var tnode;
-    var tedges;
-    var tedge;
     var canvas = document.getElementById("main-canvas");
 
     var width = 1200;
@@ -93,6 +86,9 @@
     let array = [];
     let nc;
     let init = false;
+
+    const arrowSize = 10;
+
     callAPI(1);
     function callAPI(week) {
         $.ajax({
@@ -122,11 +118,13 @@
         follower_status = ["followers", "newfollowers", "unfollowers"];
         follower_list = ["follower_list", "newfollower_list", "unfollower_list"];
 
+        const tnodeRadius = 11;
+
         for (let i = 0; i < finaldata.length; i++) {
             let tnode = {};
             tnode['id'] = user_dic[finaldata[i].user];
             tnode['cluster'] = 0;
-            tnode['radius'] = 11;
+            tnode['radius'] = tnodeRadius;
             tnode['week'] = week;
             tnode['followers'] = finaldata[i].followers;
             tnode['newfollowers'] = finaldata[i].newfollowers;
@@ -145,6 +143,8 @@
                 let tedge = {};
                 tedge['source'] = user_dic[finaldata[i].user];
                 tedge['target'] = user_dic[finaldata[i].user] + j;
+                tedge['sourceradius'] = tnodeRadius;
+                tedge['targetradius'] = finaldata[i][follower_status[j - 1]];
                 tedges.push(tedge);
 
                 finaldata[i][follower_list[j - 1]].forEach(function (d) {
@@ -201,19 +201,18 @@
             .attr("color", [255, 255, 0, 1]);
 
         sedges
-            .attr("width", 1)
-            
+            .attr("width", 3)
+            .attr("arrowsize", arrowSize)
             .attr("color",
                 d => {
                     if (d.target.radius > 0) {
-                        return [255 / 255, 26 / 255, 28 / 255, 0.5];
+                        return [255 / 255, 26 / 255, 28 / 255, 1];
                     } else {
                         return [0, 0, 0, 0];
                     }
                 }
             );
-        
-     
+
             
         
 
@@ -268,16 +267,16 @@
         snodes.attr("center", positionScale(d => d.index));
         sedges.attr("p1", positionScale(d => d.source.index));
         sedges.attr("p2", positionScale(d => d.target.index));
-       
-     
-   
-        
-        
-      
+        // sedges.attr("nodesize",snodes["radius"]);
+
+
+
+
+
+        sedges.data(edges);
         snodesBG.data(nodes);
         snodes.data(nodes);
-        sedges.data(edges);
-    
+
 
 
         force.on("tick", () => {
@@ -307,7 +306,6 @@
 
             requested = null;
             snodesSelected.data(selectedNode ? [selectedNode] : []);
-
             // Cleanup and re-render.
             platform.clear([1, 1, 1, 1]);
             snodes.attr("radius", function (d) {
@@ -321,9 +319,32 @@
                     return 10;
                 }
             });
+            sedges.attr("targetsize", function (d) {
+                if (d.targetradius > 0 && d.targetradius <= 10) {
+                    return 4;
+                }
+                if (d.targetradius > 10 && d.targetradius <= 50) {
+                    return 6;
+                }
+                if (d.targetradius > 50) {
+                    return 10;
+                }
+            });
+            sedges.attr("sourcesize", function (d) {
+                if (d.sourceradius > 0 && d.sourceradius <= 10) {
+                    return 4;
+                }
+                if (d.sourceradius > 10 && d.sourceradius <= 50) {
+                    return 6;
+                }
+                if (d.sourceradius > 50) {
+                    return 10;
+                }
+            });
+
             snodes.render();
             sedges.render();
-          
+
             snodesBG.render();
 
             snodesSelected.render();
@@ -405,6 +426,7 @@
             }
         }
     }
+
     // makeSlider("Friction", "friction", 0.01, 1, 0.5);
     // makeSlider("Gravity", "gravity", 0.01, 1, 0.1);
     // makeSlider("Charge", "charge", -200, 0, -40);

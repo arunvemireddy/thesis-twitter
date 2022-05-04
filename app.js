@@ -36,6 +36,13 @@ app.get('/index',function(req,res){
     })
 })
 
+app.get('/d3',function(req,res){
+    fs.readFile("graph/d3/index.html",(err,data)=>{
+    res.writeHead(200,{"Content-Type":"text/html"});
+    res.end(data);
+    })
+})
+
 app.post("/getefd",(req,res)=>{
     let week = req.body.week;
     let user = req.body.user;

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <style>
+        #div {
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+
+        html {
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+
+        body {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            /* margin: 0;
+            padding: 0;
+            display: flex;
+            font-family: sans-serif;
+            font-size: 75%; */
+        }
+
+        /* 
+        .controls {
+            flex-basis: 200px;
+            padding: 0 5px;
+        }
+
+        .controls .force {
+            background-color: #eee;
+            border-radius: 3px;
+            padding: 5px;
+            margin: 5px 0;
+        }
+
+        .controls .force p label {
+            margin-right: .5em;
+            font-size: 120%;
+            font-weight: bold;
+        }
+
+        .controls .force p {
+            margin-top: 0;
+        }
+
+        .controls .force label {
+            display: inline-block;
+        }
+
+        .controls input[type="checkbox"] {
+            transform: scale(1.2, 1.2);
+        }
+
+        .controls input[type="range"] {
+            margin: 0 5% 0.5em 5%;
+            width: 90%;
+        }
+
+        /* alpha viewer */
+        .controls .alpha p {
+            margin-bottom: .25em;
+        }
+
+        .controls .alpha .alpha_bar {
+            height: .5em;
+            border: 1px #777 solid;
+            border-radius: 2px;
+            padding: 1px;
+            display: flex;
+        }
+
+        .controls .alpha .alpha_bar #alpha_value {
+            background-color: #555;
+            border-radius: 1px;
+            flex-basis: 100%
+        }
+
+        .controls .alpha .alpha_bar:hover {
+            border-width: 2px;
+            margin: -1px;
+        }
+
+        .controls .alpha .alpha_bar:active #alpha_value {
+            background-color: #222
+        }
+
+        */
+        /* SVG styles */
+        /* svg {
+            flex-basis: 100%;
+         min-width: 200px; 
+        } */
+
+
+        .nodes circle {
+            pointer-events: all;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="div"></div>
+    <div class="controls">
+        <!-- <div class="force alpha">
+            <p><label>alpha</label> Simulation activity</p>
+            <div class="alpha_bar" onclick="updateAll();">
+                <div id="alpha_value"></div>
+            </div>
+        </div> -->
+        <div>
+            <p>
+                <label>
+                    week
+                </label>
+            </p>
+            <output id="week">1</output>
+            <input type="range" min="1" max="15" value="1" step="1"
+                oninput="d3.select('#week').text(value); callAPI(parseInt(value));">
+        </div>
+
+        <div>
+            <p>
+                <label>
+                    count
+                </label>
+            </p>
+            <output id="count">500000</output>
+            <input type="range" min="50000" max="6000000" value="500000" id="count"
+                oninput="d3.select('#count').text(value); callAPI(1);">
+        </div>
+        <!-- <div class="force">
+    <p><label>center</label> Shifts the view, so the graph is centered at this location.</p>
+    <label>
+      x
+      <output id="center_XSliderOutput">.5</output>
+      <input type="range" min="0" max="1" value=".5" step="0.01" oninput="d3.select('#center_XSliderOutput').text(value); forceProperties.center.x=value; updateAll();">
+    </label>
+    <label>
+      y
+      <output id="center_YSliderOutput">.5</output>
+      <input type="range" min="0" max="1" value=".5" step="0.01" oninput="d3.select('#center_YSliderOutput').text(value); forceProperties.center.y=value; updateAll();">
+    </label>
+  </div>
+
+  <div class="force">
+    <p><label><input type="checkbox" checked onchange="forceProperties.charge.enabled = this.checked; updateAll();"> charge</label> Attracts (+) or repels (-) nodes to/from each other.</p>
+    <label title="Negative strength repels nodes. Positive strength attracts nodes.">
+      strength
+      <output id="charge_StrengthSliderOutput">-30</output>
+      <input type="range" min="-200" max="50" value="-30" step=".1" oninput="d3.select('#charge_StrengthSliderOutput').text(value); forceProperties.charge.strength=value; updateAll();">
+    </label>
+    <label title="Minimum distance where force is applied">
+      distanceMin
+      <output id="charge_distanceMinSliderOutput">1</output>
+      <input type="range" min="0" max="50" value="1" step=".1" oninput="d3.select('#charge_distanceMinSliderOutput').text(value); forceProperties.charge.distanceMin=value; updateAll();">
+    </label>
+    <label title="Maximum distance where force is applied">
+      distanceMax
+      <output id="charge_distanceMaxSliderOutput">2000</output>
+      <input type="range" min="0" max="2000" value="2000" step=".1" oninput="d3.select('#charge_distanceMaxSliderOutput').text(value); forceProperties.charge.distanceMax=value; updateAll();">
+    </label>
+  </div>
+
+  <div class="force">
+    <p><label><input type="checkbox" checked onchange="forceProperties.collide.enabled = this.checked; updateAll();"> collide</label> Prevents nodes from overlapping</p>
+    <label>
+      strength
+      <output id="collide_StrengthSliderOutput">.7</output>
+      <input type="range" min="0" max="2" value=".7" step=".1" oninput="d3.select('#collide_StrengthSliderOutput').text(value); forceProperties.collide.strength=value; updateAll();">
+    </label>
+    <label title="Size of nodes">
+      radius
+      <output id="collide_radiusSliderOutput">5</output>
+      <input type="range" min="0" max="100" value="5" step="1" oninput="d3.select('#collide_radiusSliderOutput').text(value); forceProperties.collide.radius=value; updateAll();">
+    </label>
+    <label title="Higher values increase rigidity of the nodes (WARNING: high values are computationally expensive)">
+      iterations
+      <output id="collide_iterationsSliderOutput">1</output>
+      <input type="range" min="1" max="10" value="1" step="1" oninput="d3.select('#collide_iterationsSliderOutput').text(value); forceProperties.collide.iterations=value; updateAll();">
+    </label>
+  </div>
+
+  <div class="force">
+    <p><label><input type="checkbox" onchange="forceProperties.forceX.enabled = this.checked; updateAll();"> forceX</label> Acts like gravity. Pulls all points towards an X location.</p>
+    <label>
+      strength
+      <output id="forceX_StrengthSliderOutput">.1</output>
+      <input type="range" min="0" max="1" value=".1" step="0.01" oninput="d3.select('#forceX_StrengthSliderOutput').text(value); forceProperties.forceX.strength=value; updateAll();">
+    </label>
+    <label title="The X location that the force will push the nodes to (NOTE: This demo multiplies by the svg width)">
+      x
+      <output id="forceX_XSliderOutput">.5</output>
+      <input type="range" min="0" max="1" value=".5" step="0.01" oninput="d3.select('#forceX_XSliderOutput').text(value); forceProperties.forceX.x=value; updateAll();">
+    </label>
+  </div>
+
+  <div class="force">
+    <p><label><input type="checkbox" onchange="forceProperties.forceY.enabled = this.checked; updateAll();"> forceY</label> Acts like gravity. Pulls all points towards a Y location.</p>
+    <label>
+      strength
+      <output id="forceY_StrengthSliderOutput">.1</output>
+      <input type="range" min="0" max="1" value=".1" step="0.01" oninput="d3.select('#forceY_StrengthSliderOutput').text(value); forceProperties.forceY.strength=value; updateAll();">
+    </label>
+    <label title="The Y location that the force will push the nodes to (NOTE: This demo multiplies by the svg height)">
+      y
+      <output id="forceY_YSliderOutput">.5</output>
+      <input type="range" min="0" max="1" value=".5" step="0.01" oninput="d3.select('#forceY_YSliderOutput').text(value); forceProperties.forceY.y=value; updateAll();">
+    </label>
+  </div>
+
+  <div class="force">
+    <p><label><input type="checkbox" checked onchange="forceProperties.link.enabled = this.checked; updateAll();"> link</label> Sets link length</p>
+    <label title="The force will push/pull nodes to make links this long">
+      distance
+      <output id="link_DistanceSliderOutput">30</output>
+      <input type="range" min="0" max="100" value="30" step="1" oninput="d3.select('#link_DistanceSliderOutput').text(value); forceProperties.link.distance=value; updateAll();">
+    </label>
+    <label title="Higher values increase rigidity of the links (WARNING: high values are computationally expensive)">
+      iterations
+      <output id="link_IterationsSliderOutput">1</output>
+      <input type="range" min="1" max="10" value="1" step="1" oninput="d3.select('#link_IterationsSliderOutput').text(value); forceProperties.link.iterations=value; updateAll();">
+    </label> 
+    </div> -->
+    </div>
+    <script>
+        var forceProperties = {
+            center: { x: 0.5, y: 0.5 },
+            charge: {
+                enabled: true,
+                strength: -30,
+                distanceMin: 1,
+                distanceMax: 2000
+            },
+            collide: {
+                enabled: true,
+                strength: .7,
+                iterations: 1,
+                radius: 5
+            },
+            forceX: {
+                enabled: false,
+                strength: .1,
+                x: .5
+            },
+            forceY: {
+                enabled: false,
+                strength: .1,
+                y: .5
+            },
+            link: {
+                enabled: true,
+                distance: 18,
+                iterations: 1
+            }
+        };
+        var colors = [
+            'black',
+            'blue',
+            'green',
+            'red'
+        ];
+        var radius = ['3', '5', '7', '9', '11'];
+        var width = $('#div').width();
+        var height = $('#div').height();
+        var svg = d3.select("#div")
+            .append("svg")
+            .attr('width', width)
+            .attr('height', height);
+        var g = svg.append("g").attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+        var link = g.append("g").attr("stroke", "#000").attr("stroke-width", 1.5).selectAll(".link");
+        var node = g.append("g").attr("stroke", "#fff").attr("stroke-width", 1.5).selectAll(".node");
+        callAPI(1);
+        var finaldata;
+        var tnodes = [];
+        var tedges = [];
+        var simulation;
+        var nc;
+        var arrayX = [];
+        var arrayY = [];
+        function callAPI(week) {
+            $.ajax({
+                method: "post",
+                url: "/getefd",
+                data: JSON.stringify({ 'week': week }),
+                dataType: 'json',
+                contentType: 'application/json',
+                success: function (data) {
+                    finaldata = data;
+                    loadagain(finaldata, week);
+                }
+            })
+        }
+
+        function loadagain(finaldata, week) {
+            tnodes = [];
+            tedges = [];
+            simulation;
+            svg;
+            let users = [];
+            let user_dic = {};
+            finaldata.forEach(function (d, i) {
+                users.push(d.user);
+                user_dic[d.user] = i * 4;
+            });
+            follower_status = ["followers", "newfollowers", "unfollowers"];
+            follower_list = ["follower_list", "newfollower_list", "unfollower_list"];
+
+            for (let i = 0; i < finaldata.length; i++) {
+                let tnode = {};
+                tnode['id'] = user_dic[finaldata[i].user];
+                tnode['cluster'] = 0;
+                tnode['radius'] = 11;
+                tnode['week'] = week;
+                tnode['followers'] = finaldata[i].followers;
+                tnode['newfollowers'] = finaldata[i].newfollowers;
+                tnode['unfollowers'] = finaldata[i].unfollowers;
+                tnode['userid'] = finaldata[i].user;
+                tnodes.push(tnode);
+                for (let j = 1; j < 4; j++) {
+                    let tnode2 = {};
+                    tnode2['id'] = user_dic[finaldata[i].user] + j;
+                    tnode2['cluster'] = j;
+                    tnode2['radius'] = finaldata[i][follower_status[j - 1]];
+                    tnode2['week'] = week;
+                    tnodes.push(tnode2);
+
+
+                    let tedge = {};
+                    tedge['source'] = user_dic[finaldata[i].user];
+                    tedge['target'] = user_dic[finaldata[i].user] + j;
+                    tedge['radius'] = finaldata[i][follower_status[j - 1]];
+                    tedges.push(tedge);
+
+                    finaldata[i][follower_list[j - 1]].forEach(function (d) {
+                        if (users.includes(d)) {
+                            let tedge = {};
+                            tedge['source'] = user_dic[d];
+                            tedge['target'] = user_dic[finaldata[i].user] + j;
+                            tedge['radius'] = 1;
+                            tedge['cluster'] = 1;
+                            tedges.push(tedge);
+                        }
+                    }
+                    )
+                }
+            }
+            initializeSimulation();
+            initializeDisplay();
+
+        }
+
+
+
+        function initializeSimulation() {
+            simulation = d3.forceSimulation(tnodes)
+                .force("link", d3.forceLink(tedges).id(d => d.id).distance(0).strength(1))
+                .force("charge", d3.forceManyBody())
+                .force("collide", d3.forceCollide())
+                .force("center", d3.forceCenter())
+                .force("forceX", d3.forceX(width))
+                .force("forceY", d3.forceY(height))
+                .alphaTarget(1);
+            //   updateForces();
+            simulation.force("forceX").strength(0.1);
+            simulation.force("forceY").strength(0.1);
+            simulation.force("link").distance(18);
+            simulation.force("link").strength(0.2);
+            simulation.force("charge").strength(-40);
+            simulation.on("tick", ticked);
+        }
+
+        function initializeDisplay() {
+
+            node = node.data(tnodes, function (d) { return d.id; });
+            node.exit().remove();
+            node = node
+                .enter()
+                .append("circle")
+                .attr("r", 8)
+                .attr('fill', function (d) {
+                    return colors[d.cluster];
+                })
+                .attr('r', function (d) {
+                    if (d.radius > 0 & d.radius <= 10) {
+                        return radius[0]
+                    }
+                    if (d.radius > 10 & d.radius <= 25) {
+                        return radius[1]
+                    }
+                    if (d.radius > 25 & d.radius <= 50) {
+                        return radius[2]
+                    }
+                    if (d.radius > 50) {
+                        return radius[3]
+                    }
+                })
+                .merge(node);
+
+            link = link.data(tedges, function (d) { return d.source.id + "-" + d.target.id; })
+            link.exit().remove();
+            link = link.enter().append("line")
+            .attr('stroke', function (d) {
+                    if (d.radius > 0) {
+                        return 'black';
+                    } else {
+                        return 'white';
+                    }
+                })
+            .merge(link);
+
+            simulation.nodes(tnodes)
+            simulation.force("link", d3.forceLink(tedges))
+            simulation.alpha(1).restart();
+
+
+
+            // .call(d3.drag()
+            //     .on("start", dragstarted)
+            //     .on("drag", dragged)
+            //     .on("end", dragended));
+
+
+            node.append("title")
+                .text(function (d) { return d.id; });
+
+            // updateDisplay();
+        }
+
+
+
+        // apply new force properties
+        function updateForces() {
+            simulation.force("center")
+                .x(width * forceProperties.center.x)
+                .y(height * forceProperties.center.y);
+            simulation.force("charge")
+                .strength(forceProperties.charge.strength * forceProperties.charge.enabled)
+                .distanceMin(forceProperties.charge.distanceMin)
+                .distanceMax(forceProperties.charge.distanceMax);
+            simulation.force("collide")
+                .strength(forceProperties.collide.strength * forceProperties.collide.enabled)
+                .radius(forceProperties.collide.radius)
+                .iterations(forceProperties.collide.iterations);
+            simulation.force("forceX")
+                .strength(forceProperties.forceX.strength * forceProperties.forceX.enabled)
+                .x(width * forceProperties.forceX.x);
+            simulation.force("forceY")
+                .strength(forceProperties.forceY.strength * forceProperties.forceY.enabled)
+                .y(height * forceProperties.forceY.y);
+            simulation.force("link")
+                .id(function (d) { return d.id; })
+                .distance(forceProperties.link.distance)
+                .iterations(forceProperties.link.iterations)
+                .links(forceProperties.link.enabled ? tedges : []);
+            simulation.alpha(1).restart();
+        }
+
+
+
+
+
+
+
+        // update the display based on the forces (but not positions)
+        function updateDisplay() {
+            // node
+            //     .attr("r", forceProperties.collide.radius)
+            //     .attr("fill", d =>function(d){
+            //         console.log(d);
+            //     });
+            // .attr("stroke", forceProperties.charge.strength > 0 ? "blue" : "red")
+            // .attr("stroke-width", forceProperties.charge.enabled==false ? 0 : Math.abs(forceProperties.charge.strength)/15);
+
+            // link
+            // .attr("stroke-width", forceProperties.link.enabled ? 1 : .5)
+            // .attr("opacity", forceProperties.link.enabled ? 1 : 0);
+        }
+
+
+        // function ticked() {
+        //     node.attr("cx", function (d) { return d.x; })
+        //         .attr("cy", function (d) { return d.y; })
+
+        //     link.attr("x1", function (d) { return d.source.x; })
+        //         .attr("y1", function (d) { return d.source.y; })
+        //         .attr("x2", function (d) { return d.target.x; })
+        //         .attr("y2", function (d) { return d.target.y; });
+        // }
+
+    
+        function ticked() {
+            count = 5;
+            let c;
+
+            link
+                .attr("x1", function (d) {
+                    return pos(arrayX, d.source.x, c);
+                })
+                .attr("y1", function (d) {
+                    return pos(arrayX, d.source.y, c);
+                })
+                .attr("x2", function (d) {
+                    return pos(arrayX, d.target.x, c);
+                })
+                .attr("y2", function (d) {
+                    return pos(arrayX, d.target.y, c);
+                });
+
+            node
+                .attr("cx", function (d) {
+                    let x = d.x;
+                    return pos(arrayX, x, c);
+                })
+                .attr("cy", function (d) {
+                    let y = d.y
+                    return pos(arrayY, y, c);
+                })
+            // d3.select('#alpha_value').style('flex-basis', (simulation.alpha()*100) + '%');
+        }
+
+        function pos(arr, d, c) {
+            if (nc != document.getElementById('count').value) {
+                nc = document.getElementById('count').value;
+                c = 0;
+                init = false;
+            }
+            if (c > document.getElementById('count').value) {
+                init = true;
+            }
+            if (!init) {
+                c++;
+                arr[d.index] = d;
+                return d;
+            } else {
+                if (arr[d.index] !== undefined)
+                    return arr[d.index];
+                else
+                    return -1;
+            }
+        }
+
+        function dragstarted(d) {
+            if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(d) {
+            d.fx = d3.event.x;
+            d.fy = d3.event.y;
+        }
+
+        function dragended(d) {
+            if (!d3.event.active) simulation.alphaTarget(0.0001);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        // update size-related forces
+        // d3.select(window).on("resize", function () {
+        //     width = +svg.node().getBoundingClientRect().width;
+        //     height = +svg.node().getBoundingClientRect().height;
+        //     // updateForces();
+        // });
+
+        // convenience function to update everything (run after UI input)
+        function updateAll() {
+            updateForces();
+            updateDisplay();
+        }
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../style.css" type="text/css"/>
+    <script src="https://d3js.org/d3.v6.min.js" type="text/javascript"></script>
+    <script src="../utils.js" type="text/javascript"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <title>Title</title>
+    <style type="text/css">
+        .fps {
+            position: fixed;
+            top: 0;
+            right: 0;
+            padding: 10px;
+            margin: 0;
+            font-size: 15px;
+        }
+
+        .sliders {
+            margin: auto;
+            width: 20%;
+            float: right;
+        }
+
+        .sliders label {
+            display: block;
+            font-weight: bold;
+        }
+
+        .sliders input {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+        }
+
+        #main-canvas {
+            margin: auto;
+        }
+
+        .canvasclass {
+            width: 100%;
+            height: 100%;
+        }
+
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: 120px;
+            height: 50px;
+
+            background: lightsteelblue;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <textarea rows="5" id="name" hidden></textarea>
+</div>
+<div class="sliders" id="slide"></div>
+<div id="main-canvas" class="canvasclass">
+
+</div>
+
+<div class="fps"></div>
+<div class="initializing">
+    <p>Initializing...</p>
+</div>
+
+<script>
+    let totaldata = [];
+    let finaldata;
+    let slider;
+    let tnodes;
+    let tedges;
+
+
+    const width = 1200;
+    const height = 1000;
+
+    let canvas = d3.select('#main-canvas').append('svg').attr('id', 'main-svg').attr('width', width).attr('height', height);
+
+
+    let init = false;
+    let count = 0;
+    const count_init = 100;
+    let count_array = [];
+    // position:absolute;
+    // text-align: center;
+    // width: 60px;
+    // height: 28px;
+    //
+    // background: lightsteelblue;
+    // pointer-events: none;
+
+    let week_max = 15;
+
+    callAPI(1);
+
+    for (let i = 0; i < week_max; i++) {
+        if (totaldata[i] === undefined) {
+            console.log(i + 1, " called");
+            $.ajax({
+                method: "post",
+                url: "/getefd",
+                data: JSON.stringify({'week': i + 1, 'user': '12167942'}),
+                dataType: 'json',
+                contentType: 'application/json',
+                success: function (data) {
+                    totaldata[i] = data;
+                }
+            })
+        }
+    }
+
+
+    function callAPI(week, initial = true) {
+        if (totaldata[week] === undefined) {
+            console.log(week, " called");
+            $.ajax({
+                method: "post",
+                url: "/getefd",
+                data: JSON.stringify({'week': week, 'user': '12167942'}),
+                dataType: 'json',
+                contentType: 'application/json',
+                success: function (data) {
+                    totaldata[week - 1] = data;
+                    finaldata = totaldata[week - 1];
+                    loadagain(finaldata, week, initial);
+                }
+            })
+        } else {
+            finaldata = totaldata[week - 1];
+            loadagain(finaldata, week, initial);
+        }
+    }
+
+    function loadagain(finaldata, week, initial) {
+        let users = [];
+        let user_dic = {};
+        finaldata.forEach(function (d, i) {
+            users.push(d.user);
+            user_dic[d.user] = i * 4;
+        });
+        // console.log(users);
+        tnodes = []; // node list
+
+        tedges = [];
+        follower_status = ["followers", "newfollowers", "unfollowers"];
+        follower_list = ["follower_list", "newfollower_list", "unfollower_list"];
+
+        const tnodeRadius = 3;
+
+        for (let i = 0; i < finaldata.length; i++) {
+            let tnode = {};
+            tnode['id'] = user_dic[finaldata[i].user];
+            tnode['cluster'] = 0;
+            tnode['radius'] = tnodeRadius;
+            tnode['week'] = week;
+            tnode['followers'] = finaldata[i].followers;
+            tnode['newfollowers'] = finaldata[i].newfollowers;
+            tnode['unfollowers'] = finaldata[i].unfollowers;
+            tnode['userid'] = finaldata[i].user;
+            tnodes.push(tnode);
+            for (let j = 1; j < 4; j++) {
+                let tnode2 = {};
+                tnode2['id'] = user_dic[finaldata[i].user] + j;
+                tnode2['cluster'] = j;
+                tnode2['radius'] = finaldata[i][follower_status[j - 1]];
+                tnode2['week'] = week;
+                tnodes.push(tnode2);
+
+
+                let tedge = {};
+                tedge['source'] = user_dic[finaldata[i].user];
+                tedge['target'] = user_dic[finaldata[i].user] + j;
+                tedge['sourceradius'] = tnodeRadius;
+                tedge['targetradius'] = finaldata[i][follower_status[j - 1]];
+                tedges.push(tedge);
+
+                finaldata[i][follower_list[j - 1]].forEach(function (d) {
+                        if (users.includes(d)) {
+                            let tedge = {};
+                            tedge['source'] = user_dic[d];
+                            tedge['target'] = user_dic[finaldata[i].user] + j;
+                            tedge['cluster'] = 1;
+                            tedges.push(tedge);
+                        }
+                    }
+                )
+            }
+            // console.log(tedges);
+        }
+
+        simulation(tnodes, tedges, initial);
+    }
+
+    function simulation(tnodes_in, tedges_in, initial) {
+
+        let node_data = JSON.parse(JSON.stringify(tnodes_in));;
+        let edge_data = JSON.parse(JSON.stringify(tedges_in));
+        const node_data_length = node_data.length;
+        count = 4 * document.getElementById('count').value;
+
+        for (var i = 0; i < node_data_length; i++) {
+            node_data[i].index = i;
+            node_data[i].x = Math.random() * width;
+            node_data[i].y = Math.random() * height;
+        }
+
+        // d3
+        //     .select("#main-svg")
+        //     .selectAll('circle')
+        //     .data(node_data)
+        //     .join('circle')
+        //     .attr("r", function (d) {
+        //         if (d.radius > 0 && d.radius <= 10) {
+        //             return 4;
+        //         }
+        //         if (d.radius > 10 && d.radius <= 50) {
+        //             return 6;
+        //         }
+        //         if (d.radius > 50) {
+        //             return 10;
+        //         }
+        //     })
+        //     .style('fill','red')
+        //     .attr('cx', function (d){
+        //         return d.x;})
+        //     .attr('cy', function (d){return d.y;});
+        //
+        // d3
+        // .select("#main-svg")
+        // .selectAll('line')
+        // .data(edge_data)
+        // .join('line')
+        //     .style('stroke',"lightgreen")
+        //     .style('stroke-width',1)
+        //     .attr('x1',function (d){return node_data[d.source].x;})
+        //     .attr('y1',function (d){return node_data[d.source].y;})
+        //     .attr('x2',function (d){return node_data[d.target].x;})
+        //     .attr('y2',function (d){return node_data[d.target].y;})
+
+        if (initial) {
+            d3.forceSimulation(node_data)
+                .force("link", d3.forceLink().links(edge_data))
+                .force("charge", d3.forceManyBody().strength(-10))
+                .force("forceX", d3.forceX(width / 2))
+                .force("forceY", d3.forceY(height / 2))
+                .on('tick', ticked_node);
+        } else {
+            d3
+                .select("#main-svg")
+                .selectAll('circle')
+                .data(node_data)
+                .join('circle')
+                .attr("r", function (d) {
+                    if (d.radius > 0 && d.radius <= 10) {
+                        return 3;
+                    } else if (d.radius > 10 && d.radius <= 50) {
+                        return 4;
+                    } else if (d.radius > 50) {
+                        return 5;
+                    }
+                    return 0;
+                })
+                .style('fill', function (d) {
+                    if (d.cluster === 0) {
+                        return 'black';
+                    } else if (d.cluster === 1) {
+                        return 'blue';
+                    } else if (d.cluster === 2) {
+                        return 'red';
+                    } else if (d.cluster === 3) {
+                        return 'green';
+                    }
+                });
+
+            d3
+                .select("#main-svg")
+                .selectAll('line')
+                .data(edge_data)
+                .join('line')
+                .style('stroke', 'black')
+                .style('stroke-width', function (d) {
+                    if (d.target < count || d.source < count) {
+                        if (d.targetradius > 0 && d.sourceradius > 0) {
+                            return 1;
+                        }
+                    }
+                    return 0;
+                });
+        }
+
+        function ticked_node() {
+            // if(Date.now() > endTime){
+            //     force_simulation.stop();
+            //
+            // }
+            update_links();
+            // var u = d3.select('#main-svg')
+            //     .selectAll('circle')
+            //     .data(node_data)
+            //     .join('circle')
+            //     .attr('cx', function (d) {
+            //         return d.x;
+            //     })
+            //     .attr('cy', function (d) {
+            //         return d.y;
+            //     })
+            d3
+                .select("#main-svg")
+                .selectAll('circle')
+                .data(node_data)
+                .join('circle')
+                .attr("r", function (d) {
+                    if (d.radius > 0 && d.radius <= 10) {
+                        return 3;
+                    }
+                    if (d.radius > 10 && d.radius <= 50) {
+                        return 4;
+                    }
+                    if (d.radius > 50) {
+                        return 5;
+                    }
+                })
+                .style('fill', function (d) {
+                    if (d.cluster === 0) {
+                        return 'black';
+                    }
+                    if (d.cluster === 1) {
+                        return 'blue';
+                    }
+                    if (d.cluster === 2) {
+                        return 'red';
+                    }
+                    if (d.cluster === 3) {
+                        return 'green';
+                    }
+                })
+                .attr('cx', function (d) {
+                    if (d.index < count) {
+                        return d.x;
+                    }
+                    return -10;
+                })
+                .attr('cy', function (d) {
+                    if (d.index < count) {
+                        return d.y;
+                    }
+                    return -10;
+                });
+
+        }
+
+        function update_links() {
+            var u = d3
+                .select("#main-svg")
+                .selectAll('line')
+                .data(edge_data)
+                .join('line')
+                .style('stroke', 'black')
+                .style('stroke-width', function (d) {
+                    if (d.target.index < count || d.source.index < count) {
+                        if (d.targetradius > 0 && d.sourceradius > 0) {
+                            // if (d.source.index === 224){
+                            //     console.log("FUCK",d.targetradius, d.sourceradius);
+                            // }
+                            return 1;
+                        }
+                    }
+                    return 0;
+                })
+                // .attr('x1',function (d){console.log(link_node_surface_coordinate(d.source,d.target,d.sourceradius));
+                //     return link_node_surface_coordinate(d.source,d.target,d.sourceradius)[0][0];})
+                // .attr('y1',function (d){return link_node_surface_coordinate(d.source,d.target,d.sourceradius)[0][1];})
+                // .attr('x2',function (d){return link_node_surface_coordinate(d.source,d.target,d.targetradius)[1][0];})
+                // .attr('y2',function (d){return link_node_surface_coordinate(d.source,d.target,d.targetradius)[1][1];})
+                .attr('x1', function (d) {
+                    return d.source.x;
+                })
+                .attr('y1', function (d) {
+                    return d.source.y;
+                })
+                .attr('x2', function (d) {
+                    return d.target.x;
+                })
+                .attr('y2', function (d) {
+                    return d.target.y;
+                });
+            // .attr('id', [d.target.index,d.source.index]);
+        }
+
+        function link_node_surface_coordinate(source, target, r) {
+
+            const x_distance = target.x - source.x;
+            const y_distance = target.y - source.y;
+            const distance = Math.sqrt(Math.pow(x_distance, 2) + Math.pow(y_distance, 2));
+            let ratio = 1;
+            if(distance !== 0){
+                ratio = r / distance;
+            }
+
+            const modified_source = [source.x + x_distance * ratio, source.y + y_distance * ratio];
+            const modified_target = [target.x - x_distance * ratio, target.y - y_distance * ratio];
+
+            if(modified_source[0] === NaN || modified_source[1] === NaN || modified_target[0] === NaN || modified_source === NaN){
+                return [[source.x, source.y], [target.x, target.y]];
+            }
+            return [modified_source, modified_target];
+
+
+        }
+
+        let tooltip = d3.select("#main-svg")
+            .append("rect")
+            // .insert('rect',':first-child')
+            .style("opacity", 0)
+            .style('position', 'absolute')
+            .style('fill', 'lightsteelblue')
+            .attr('width', 170)
+            .attr('height', 70)
+            .style('text-align', 'center');
+
+        let tooltipText = d3.select("#main-svg")
+            .append("text")
+            .style("opacity", 0)
+            .style('position', 'absolute');
+
+        d3.select("#main-svg")
+            .selectAll('circle')
+            .data(node_data)
+            .join('circle')
+            .on('mouseover', function (event, d) {
+                tooltip.transition()
+                    .duration(200)
+                    .style("opacity", 1);
+                tooltipText.transition()
+                    .duration(200)
+                    .style("opacity", 1);
+                tooltip
+                    .attr('x', event.clientX + 20)
+                    .attr('y', event.clientY - 85);
+
+                if (d.followers === undefined ||
+                    d.unfollowers === undefined ||
+                    d.newfollowers === undefined) {
+                    tooltip.attr('width', 170);
+                } else {
+                    tooltip.attr('width', 120);
+                }
+                tooltipText
+                    .attr('x', event.clientX + 30)
+                    .attr('y', event.clientY - 70)
+                    .text('userid :' + d.id)
+                    .append('tspan')
+                    .text('followers :' + d.followers)
+                    .attr('x', event.clientX + 30)
+                    .attr('y', event.clientY - 55)
+                    .append('tspan')
+                    .text('unfollowers :' + d.unfollowers)
+                    .attr('x', event.clientX + 30)
+                    .attr('y', event.clientY - 40)
+                    .append('tspan')
+                    .text('newfollowers :' + d.newfollowers)
+                    .attr('x', event.clientX + 30)
+                    .attr('y', event.clientY - 25);
+
+                d3
+                    .select(this)
+                    .style('fill',function(){
+                        console.log("On the circle")
+                        return 'pink';});
+            })
+            .on("click",function (d){
+                d3.select(this)
+                .text(function (d){
+                    console.log("CLICKED", d, this);
+                    if(d.cluster === 0){
+                        window.open('https://twitter.com/i/user/' + d.userid, '_blank');
+                    }
+                })
+
+            })
+            .on('mouseout', function (d) {
+                tooltipText
+                    .style("opacity", 0)
+                    .attr('x', -10)
+                    .attr('y', -10)
+                    .select('tspan')
+                    .attr('x', -10)
+                    .attr('y', -10)
+                    .select('tspan')
+                    .attr('x', -10)
+                    .attr('y', -10)
+                    .select('tspan')
+                    .attr('x', -10)
+                    .attr('y', -10)
+                ;
+
+                tooltip
+                    .style("opacity", 0)
+                    .attr('x', -100)
+                    .attr('y', -100);
+                d3
+                    .select(this)
+                    .style('fill', function (d) {
+                        if (d.cluster === 0) {
+                            return 'black';
+                        }
+                        if (d.cluster === 1) {
+                            return 'blue';
+                        }
+                        if (d.cluster === 2) {
+                            return 'red';
+                        }
+                        if (d.cluster === 3) {
+                            return 'green';
+                        }
+                    })
+            });
+    }
+
+    makeSlider("Week", "week", 1, 15, 1);
+    makeSlider("Number of Users", "count", 1, 2000, count_init);
+    // makeSlider("Gravity", "gravity", 1, 10, 0.1);
+
+    function makeSlider(name, attr, min, max, defaultValue) {
+
+        d3.select(".sliders").append("label").text(name);
+        var inputbx = d3.select(".sliders").append("input").attr("value", defaultValue).attr('id', attr);
+        var slider = d3.select(".sliders").append("input");
+        slider
+            .attr("type", "range")
+            .attr("min", 0)
+            .attr("max", 1000)
+            .attr("value", (defaultValue - min) / (max - min) * 1000)
+        slider.on("input", () => {
+            var val = +slider.property("value");
+            var d = val / 1000 * (max - min) + min;
+            if (attr == "week") {
+                inputbx.attr("value", parseInt(d));
+                w = parseInt(d);
+                callAPI(parseInt(d), false);
+            }
+            if (attr == "count") {
+                inputbx.attr("value", parseInt(d));
+                // init = false;
+                simulation(tnodes, tedges, true);
+            }
+            if (attr == "gravity") {
+                inputbx.attr("value", Math.round(d * 10) / 10);
+                force.force("forceX").strength(d);
+                force.force("forceY").strength(d);
+
+            }
+            if (attr == "linkDistance") {
+                inputbx.attr("value", d);
+                force.force("link").distance(d);
+
+            }
+            if (attr == "linkStrength") {
+                inputbx.attr("value", d);
+                force.force("link").strength(d);
+
+            }
+            if (attr == "charge") {
+                inputbx.attr("value", d);
+                force.force("charge").strength(d);
+            }
+            if (attr == "charge") {
+                inputbx.attr("value", d);
+                force.force("charge").strength(d);
+            }
+            // force.alphaTarget(0.3).restart();
+        });
+    }
+
+</script>
+
+</body>
+</html>

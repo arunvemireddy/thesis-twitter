@@ -7,14 +7,14 @@ var link;
 var node;
 
 function _createSVG(width, height) {
-     svg = d3.select('#div').append("svg")
+    svg = d3.select('#div').append("svg")
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [-width / 2, -height / 2, width, height]);
 
-     simulation = d3.forceSimulation()
-        .force("charge", d3.forceManyBody().strength(-15))
-        .force("link", d3.forceLink().id(d => d.id).distance(20))
+    simulation = d3.forceSimulation()
+        .force("charge", d3.forceManyBody().strength(-20))
+        .force("link", d3.forceLink().id(d => d.id).distance(30))
         .force("x", d3.forceX())
         .force("y", d3.forceY())
         .on("tick", ticked);
@@ -22,38 +22,66 @@ function _createSVG(width, height) {
     link = svg.append("g")
         .attr("stroke", "#000")
         .attr("stroke-width", 1.5)
-        .selectAll("line");
+        .selectAll("line")
+        .attr('z-index', '5');
 
     node = svg.append("g")
         .attr("stroke", "#fff")
         .attr("stroke-width", 1.5)
         .selectAll("circle");
+
     node.attr("fill", function (d) {
         return colors[d.cluster];
+    }).attr("r", d => {
+        if (d.radius > 0 & d.radius <= 10) {
+            return radius[0]
+        }
+        if (d.radius > 10 & d.radius <= 25) {
+            return radius[1]
+        }
+        if (d.radius > 25 & d.radius <= 50) {
+            return radius[2]
+        }
+        if (d.radius > 50) {
+            return radius[3]
+        }
     })
-        .attr("r", d => {
-            if (d.radius > 0 & d.radius <= 10) {
-                return radius[0]
-            }
-            if (d.radius > 10 & d.radius <= 25) {
-                return radius[1]
-            }
-            if (d.radius > 25 & d.radius <= 50) {
-                return radius[2]
-            }
-            if (d.radius > 50) {
-                return radius[3]
-            }
-        })
 
     function ticked() {
-        node.attr("cx", d => d.x)
-            .attr("cy", d => d.y)
+
+        svg.append('defs').append('marker')
+            .attrs({
+                'id': 'arrowhead',
+                'viewBox': '-0 -5 10 10',
+                'refX': 13,
+                'refY': 0,
+                'orient': 'auto',
+                'markerWidth': 5,
+                'markerHeight': 5,
+                'xoverflow': 'visible'
+            })
+            .append('svg:path')
+            .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+            .attr('fill', 'black')
+            .style('stroke', 'black');
 
         link.attr("x1", d => d.source.x)
             .attr("y1", d => d.source.y)
             .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
+            .attr("y2", d => d.target.y)
+            .attr("marker-end", function (d) {
+                if (d.radius > 0 && d.arrow!=false) {
+                    return 'url(#arrowhead)'
+                }
+            })
+
+        node.attr("cx", d => d.x)
+            .attr("cy", d => d.y)
+
+
+
+
+
     }
 
     return Object.assign(svg.node(), {
@@ -88,23 +116,25 @@ function _createSVG(width, height) {
                 })
 
             node.append("title")
-                .text(function (d) { 
-                    let user =d['id'];
-                    let followers=d['followers'];
-                    let unfollowers=d['unfollowers'];
-                    let newfollowers=d['newfollowers'];
-                    return 'userid ' +user+ '\n' +'followers '+followers + '\n' +'unfollowers '+unfollowers+'\n'+'newfollowers '+newfollowers; 
+                .text(function (d) {
+                    let user = d['id'];
+                    let followers = d['followers'];
+                    let unfollowers = d['unfollowers'];
+                    let newfollowers = d['newfollowers'];
+                    return 'userid ' + user + '\n' + 'followers ' + followers + '\n' + 'unfollowers ' + unfollowers + '\n' + 'newfollowers ' + newfollowers;
                 });
             link = link
                 .data(links, d => `${d.source.id}\t${d.target.id}`)
                 .join("line");
-            link.attr('stroke', function (d) {
-                if (d.radius > 0) {
-                    return 'black';
-                } else {
-                    return 'white';
-                }
-            })
+                link.attr('stroke', function (d) {
+                    if (d.arrow == false && d.radius > 0) {
+                        return 'rgb(250, 2, 229)';
+                    }else if(d.radius > 0){
+                        return 'black';
+                    }else{
+                        return 'white';
+                    }
+                })
         }
     });
 }
@@ -170,6 +200,7 @@ function loadagain(finaldata, week) {
                     tedge['source'] = user_dic[d].toString();
                     tedge['target'] = (user_dic[finaldata[i].user] + j).toString();
                     tedge['radius'] = 1;
+                    tedge['arrow']=false
                     tedge['cluster'] = 1;
                     tedges.push(tedge);
                 }
@@ -203,7 +234,7 @@ function makeSlider(name, attr, min, max, defaultValue) {
             let w = parseInt(d);
             _callApi(w);
             inputbx.attr("value", parseInt(d));
-        }   
+        }
         if (attr == "charge") {
             force.force("charge").strength(d);
             inputbx.attr("value", d);

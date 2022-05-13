@@ -55,12 +55,8 @@
     </style>
 </head>
 <body>
-<div>
-    <textarea rows="5" id="name" hidden></textarea>
-</div>
 <div class="sliders" id="slide"></div>
 <div id="main-canvas" class="canvasclass">
-
 </div>
 
 <div class="fps"></div>
@@ -75,6 +71,9 @@
     let tnodes;
     let tedges;
 
+    let force_simulation;
+
+    let simulation_stop = false;
 
     const width = 1200;
     const height = 1000;
@@ -136,6 +135,12 @@
         }
     }
 
+    // arrow_svg = d3.create('svg').attr('viewBox',[0,0,width,200]);
+    //
+    // svg.append('defs')
+    // .append('marker')
+    // .attr('id','arrow');
+
     function loadagain(finaldata, week, initial) {
         let users = [];
         let user_dic = {};
@@ -143,7 +148,7 @@
             users.push(d.user);
             user_dic[d.user] = i * 4;
         });
-        // console.log(users);
+
         tnodes = []; // node list
 
         tedges = [];
@@ -152,12 +157,16 @@
 
         const tnodeRadius = 3;
 
+        console.log('week = ', week);
+        buffer = true;
+        // console.log(finaldata);
+
         for (let i = 0; i < finaldata.length; i++) {
             let tnode = {};
-            tnode['id'] = user_dic[finaldata[i].user];
-            tnode['cluster'] = 0;
-            tnode['radius'] = tnodeRadius;
-            tnode['week'] = week;
+            tnode['id'] = user_dic[finaldata[i].user]; // set userID from 0 to 4 * finaldata length
+            tnode['cluster'] = 0; // Because it is a user node
+            tnode['radius'] = tnodeRadius; // User node always should be shown
+            tnode['week'] = week; // week data
             tnode['followers'] = finaldata[i].followers;
             tnode['newfollowers'] = finaldata[i].newfollowers;
             tnode['unfollowers'] = finaldata[i].unfollowers;
@@ -179,18 +188,33 @@
                 tedge['targetradius'] = finaldata[i][follower_status[j - 1]];
                 tedges.push(tedge);
 
+                // finaldata[i][follower_list[j - 1]].forEach(function (d) {
+                //         if (users.includes(d)) {
+                //             let tedge = {};
+                //             tedge['source'] = user_dic[d];
+                //             tedge['target'] = user_dic[finaldata[i].user] + j;
+                //             tedge['cluster'] = 1;
+                //             tedges.push(tedge);
+                //         }
+                //     }
+                // )
+            }
+        }
+        for (let i = 0; i < finaldata.length; i++) {
+            for (let j = 1; j < 4; j++) {
                 finaldata[i][follower_list[j - 1]].forEach(function (d) {
                         if (users.includes(d)) {
                             let tedge = {};
                             tedge['source'] = user_dic[d];
                             tedge['target'] = user_dic[finaldata[i].user] + j;
+                            tedge['sourceradius'] = tnodeRadius;
+                            tedge['targetradius'] = finaldata[i][follower_status[j - 1]];
                             tedge['cluster'] = 1;
                             tedges.push(tedge);
                         }
                     }
                 )
             }
-            // console.log(tedges);
         }
 
         simulation(tnodes, tedges, initial);
@@ -198,7 +222,7 @@
 
     function simulation(tnodes_in, tedges_in, initial) {
 
-        let node_data = JSON.parse(JSON.stringify(tnodes_in));;
+        let node_data = JSON.parse(JSON.stringify(tnodes_in));
         let edge_data = JSON.parse(JSON.stringify(tedges_in));
         const node_data_length = node_data.length;
         count = 4 * document.getElementById('count').value;
@@ -242,14 +266,63 @@
         //     .attr('x2',function (d){return node_data[d.target].x;})
         //     .attr('y2',function (d){return node_data[d.target].y;})
 
+        d3.select("#main-svg").append("#main-svg:defs").append("main-svg:marker")
+            .attr("id", "arrow_black")
+            .attr("refX", 5)
+            .attr("refY", 3)
+            .attr("markerWidth", 30)
+            .attr("markerHeight", 30)
+            .attr("orient", "auto")
+            .attr("markerUnits","userSpaceOnUse")
+            .append("path")
+            .attr("d", "M 0 0 6 3 0 6 1.5 3")
+            .style("fill", "black");
+
+        d3.select("#main-svg").append("#main-svg:defs").append("main-svg:marker")
+            .attr("id", "arrow_red")
+            .attr("refX", 10)
+            .attr("refY", 6)
+            .attr("markerWidth", 30)
+            .attr("markerHeight", 30)
+            .attr("orient", "auto")
+            .attr("markerUnits","userSpaceOnUse")
+            .append("path")
+            .attr("d", "M 0 0 12 6 0 12 3 6")
+            .style("fill", "red");
+        d3.select("#main-svg").append("#main-svg:defs").append("main-svg:marker")
+            .attr("id", "arrow_green")
+            .attr("refX", 10)
+            .attr("refY", 6)
+            .attr("markerWidth", 30)
+            .attr("markerHeight", 30)
+            .attr("orient", "auto")
+            .attr("markerUnits","userSpaceOnUse")
+            .append("path")
+            .attr("d", "M 0 0 12 6 0 12 3 6")
+            .style("fill", "green");
+        d3.select("#main-svg").append("#main-svg:defs").append("main-svg:marker")
+            .attr("id", "arrow_blue")
+            .attr("refX", 10)
+            .attr("refY", 6)
+            .attr("markerWidth", 30)
+            .attr("markerHeight", 30)
+            .attr("orient", "auto")
+            .attr("markerUnits","userSpaceOnUse")
+            .append("path")
+            .attr("d", "M 0 0 12 6 0 12 3 6")
+            .style("fill", "blue");
+
+
         if (initial) {
-            d3.forceSimulation(node_data)
+            force_simulation = d3.forceSimulation(node_data)
                 .force("link", d3.forceLink().links(edge_data))
                 .force("charge", d3.forceManyBody().strength(-10))
                 .force("forceX", d3.forceX(width / 2))
                 .force("forceY", d3.forceY(height / 2))
+                .force('collide',d3.forceCollide().radius(10))
                 .on('tick', ticked_node);
         } else {
+            // console.log("intitial = False");
             d3
                 .select("#main-svg")
                 .selectAll('circle')
@@ -284,19 +357,48 @@
                 .join('line')
                 .style('stroke', 'black')
                 .style('stroke-width', function (d) {
-                    if (d.target < count || d.source < count) {
+                    if (d.target < count && d.source < count) {
+                        d3.select(this).style("stroke-dasharray", null);
                         if (d.targetradius > 0 && d.sourceradius > 0) {
+                            if (d3.select(this).style('stroke-width') === '0px') {
+                                d3.select(this).style('stroke', 'darkviolet');
+                                // d3.select(this).attr('marker-end', 'url(#arrow_red)');
+                                return 3;
+                            }
+                            d3.select(this).attr('marker-end', 'url(#arrow_black)');
                             return 1;
+                        } else if (d3.select(this).style('stroke-width') === '1px' || d3.select(this).style('stroke-width') === '3px') {
+                            d3.select(this).style("stroke-dasharray", (3, 3));
+                            let cluster = node_data[d.target].cluster;
+                            if (cluster === 0) {
+                                d3.select(this).style('stroke', 'black');
+                                // d3.select(this).attr('marker-end', 'url(#arrow_black)');
+                            } else if (cluster === 1) {
+                                d3.select(this).style('stroke', 'blue');
+                                // d3.select(this).attr('marker-end', 'url(#arrow_blue)');
+                            } else if (cluster === 2) {
+                                d3.select(this).style('stroke', 'red');
+                                // d3.select(this).attr('marker-end', 'url(#arrow_red)');
+                            } else if (cluster === 3) {
+                                d3.select(this).style('stroke', 'green');
+                                // d3.select(this).attr('marker-end', 'url(#arrow_green)');
+                            }
+                            d3.select(this).attr('marker-end', null);
+                            return 2;
                         }
+                        d3.select(this).attr('marker-end', null);
+                        return 0;
+                    } else {
+                        d3.select(this).attr('marker-end', null);
+                        return 0;
                     }
-                    return 0;
                 });
         }
 
         function ticked_node() {
-            // if(Date.now() > endTime){
+            // if(simulation_stop){
+            //     simulation_stop = false;
             //     force_simulation.stop();
-            //
             // }
             update_links();
             // var u = d3.select('#main-svg')
@@ -315,6 +417,9 @@
                 .data(node_data)
                 .join('circle')
                 .attr("r", function (d) {
+                    if (d.target === 210) {
+                        console.log("TEST - ", d);
+                    }
                     if (d.radius > 0 && d.radius <= 10) {
                         return 3;
                     }
@@ -326,6 +431,9 @@
                     }
                 })
                 .style('fill', function (d) {
+                    if (d.index === 210) {
+                        return 'magenta';
+                    }
                     if (d.cluster === 0) {
                         return 'black';
                     }
@@ -340,6 +448,7 @@
                     }
                 })
                 .attr('cx', function (d) {
+                    // nodes_location[d.index] = [d.x,d.y];
                     if (d.index < count) {
                         return d.x;
                     }
@@ -362,50 +471,56 @@
                 .join('line')
                 .style('stroke', 'black')
                 .style('stroke-width', function (d) {
-                    if (d.target.index < count || d.source.index < count) {
+                    if (d.target.index < count && d.source.index < count) {
                         if (d.targetradius > 0 && d.sourceradius > 0) {
                             // if (d.source.index === 224){
                             //     console.log("FUCK",d.targetradius, d.sourceradius);
                             // }
+                            d3.select(this).attr('marker-end', 'url(#arrow_black)');
                             return 1;
                         }
                     }
+                    d3.select(this).attr('marker-end', null);
                     return 0;
                 })
-                // .attr('x1',function (d){console.log(link_node_surface_coordinate(d.source,d.target,d.sourceradius));
-                //     return link_node_surface_coordinate(d.source,d.target,d.sourceradius)[0][0];})
-                // .attr('y1',function (d){return link_node_surface_coordinate(d.source,d.target,d.sourceradius)[0][1];})
-                // .attr('x2',function (d){return link_node_surface_coordinate(d.source,d.target,d.targetradius)[1][0];})
-                // .attr('y2',function (d){return link_node_surface_coordinate(d.source,d.target,d.targetradius)[1][1];})
-                .attr('x1', function (d) {
-                    return d.source.x;
-                })
-                .attr('y1', function (d) {
-                    return d.source.y;
-                })
-                .attr('x2', function (d) {
-                    return d.target.x;
-                })
-                .attr('y2', function (d) {
-                    return d.target.y;
-                });
-            // .attr('id', [d.target.index,d.source.index]);
+
+                .attr('',
+                    function (d) {
+                        let value_source = link_node_surface_coordinate(d.source,d.target);//,d.sourceradius);
+                        d3.select(this).attr('x1', value_source[0][0]);
+                        d3.select(this).attr('y1', value_source[0][1]);
+                        d3.select(this).attr('x2', value_source[1][0]);
+                        d3.select(this).attr('y2', value_source[1][1]);
+                    });
+                // .attr('marker-end', 'url(#arrow)');
+                // .attr('',
+                //     function (d) {
+                //         d3.select(this).attr('x1', d.source.x);
+                //         d3.select(this).attr('y1', d.source.y);
+                //         d3.select(this).attr('x2', d.target.x);
+                //         d3.select(this).attr('y2', d.target.y);
+                //     });
         }
 
-        function link_node_surface_coordinate(source, target, r) {
+        function link_node_surface_coordinate(source, target, r=4) {
+            // console.log(source,target,r);
 
             const x_distance = target.x - source.x;
             const y_distance = target.y - source.y;
             const distance = Math.sqrt(Math.pow(x_distance, 2) + Math.pow(y_distance, 2));
             let ratio = 1;
-            if(distance !== 0){
-                ratio = r / distance;
-            }
 
+            if (distance !== 0) {
+                ratio = (r+2) / distance;
+            }
+            if (isNaN(distance) || isNaN(ratio)) {
+                console.log(source, target, r, distance, ratio);
+            }
             const modified_source = [source.x + x_distance * ratio, source.y + y_distance * ratio];
             const modified_target = [target.x - x_distance * ratio, target.y - y_distance * ratio];
 
-            if(modified_source[0] === NaN || modified_source[1] === NaN || modified_target[0] === NaN || modified_source === NaN){
+            if (modified_source[0] === NaN || modified_source[1] === NaN || modified_target[0] === NaN || modified_source[1] === NaN) {
+                // console.log([source.x,source.y],[target.x,target.y],modified_source,modified_target);
                 return [[source.x, source.y], [target.x, target.y]];
             }
             return [modified_source, modified_target];
@@ -419,7 +534,7 @@
             .style("opacity", 0)
             .style('position', 'absolute')
             .style('fill', 'lightsteelblue')
-            .attr('width', 170)
+            .attr('width', 190)
             .attr('height', 70)
             .style('text-align', 'center');
 
@@ -450,10 +565,23 @@
                 } else {
                     tooltip.attr('width', 120);
                 }
+
                 tooltipText
                     .attr('x', event.clientX + 30)
                     .attr('y', event.clientY - 70)
-                    .text('userid :' + d.id)
+                if (d.userid === undefined) {
+                    tooltipText
+                        // .attr('x', event.clientX + 30)
+                        // .attr('y', event.clientY - 70)
+                        .text('id :' + d.id);
+                } else {
+                    tooltipText
+                        // .attr('x', event.clientX + 30)
+                        // .attr('y', event.clientY - 70)
+                        .attr('width', 220)
+                        .text('userid :' + d.userid);
+                }
+                tooltipText
                     .append('tspan')
                     .text('followers :' + d.followers)
                     .attr('x', event.clientX + 30)
@@ -469,18 +597,18 @@
 
                 d3
                     .select(this)
-                    .style('fill',function(){
-                        console.log("On the circle")
-                        return 'pink';});
+                    .style('fill', function () {
+                        return 'pink';
+                    });
             })
-            .on("click",function (d){
+            .on("click", function (d) {
                 d3.select(this)
-                .text(function (d){
-                    console.log("CLICKED", d, this);
-                    if(d.cluster === 0){
-                        window.open('https://twitter.com/i/user/' + d.userid, '_blank');
-                    }
-                })
+                    .text(function (d) {
+                        console.log("CLICKED", d, this);
+                        if (d.cluster === 0) {
+                            window.open('https://twitter.com/i/user/' + d.userid, '_blank');
+                        }
+                    })
 
             })
             .on('mouseout', function (d) {
@@ -524,6 +652,7 @@
 
     makeSlider("Week", "week", 1, 15, 1);
     makeSlider("Number of Users", "count", 1, 2000, count_init);
+
     // makeSlider("Gravity", "gravity", 1, 10, 0.1);
 
     function makeSlider(name, attr, min, max, defaultValue) {
@@ -542,6 +671,7 @@
             if (attr == "week") {
                 inputbx.attr("value", parseInt(d));
                 w = parseInt(d);
+                simulation_stop = true;
                 callAPI(parseInt(d), false);
             }
             if (attr == "count") {

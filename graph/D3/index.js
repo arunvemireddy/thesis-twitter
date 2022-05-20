@@ -133,10 +133,6 @@ function _createSVG(width, height) {
             });
     }
 
-    function update_previous({nodes, links}){
-        const old = new Map(node.data().map(d => [d.id, d]));
-        old_node_data = new Map(JSON.parse(JSON.stringify(Array.from(old))));
-    }
     return Object.assign(svg.node(), {
         update({nodes, links}) {
             const old = new Map(node.data().map(d => [d.id, d]));
@@ -417,9 +413,6 @@ function loadagain(finaldata, week, initial = false) {
         }
     }
     let graph = {"nodes": tnodes, "links": tedges}
-    if(initial === "previous"){
-        svgRet.update_previous(graph);
-    }
     svgRet.update(graph);
     if (initial) {
         svgRet.update(graph);
@@ -449,7 +442,7 @@ function makeSlider(name, attr, min, max, defaultValue) {
             console.log('checkBox = ', previousCheckBox);
             if(w>1 && previousCheckBox){
                 console.log('previous set', w-1, ' vs ',w);
-                _callApi(w-1, 'previous');
+                _callApi(w-1);
                 _callApi(w);
             }else{
                 _callApi(w);

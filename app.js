@@ -5,8 +5,8 @@ const port = 3000
 app.use(express.json());
 const url = "mongodb://127.0.0.1:27017";
 const dbName = "TWI";
-const collectionName1 ="w_nodes";
-const collectionName2 ="w_edges";
+// const collectionName1 ="w_nodes";
+// const collectionName2 ="w_edges";
 const collectionName3 = "th_final";
 const MongoClient = require('mongodb').MongoClient;
 const client = new MongoClient(url);
@@ -18,8 +18,8 @@ client.connect(function(err){
     if (err) throw err;
     console.log("connected to db");
     db = client.db(dbName);
-    collection_nodes=db.collection(collectionName1);
-    collection_edges=db.collection(collectionName2);
+    // collection_nodes=db.collection(collectionName1);
+    // collection_edges=db.collection(collectionName2);
     collection_final_list=db.collection(collectionName3);
 })
 

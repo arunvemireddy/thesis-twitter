@@ -28,7 +28,10 @@ function _createSVG(width, height) {
     node = svg.append("g")
         .attr("stroke", "#fff")
         .attr("stroke-width", 1.5)
-        .selectAll("circle");
+        .selectAll("circle")
+        .on("mouseenter",(event,d)=>{
+            link.attr("display","none")
+        });
 
     node.attr("fill", function (d) {
         return colors[d.cluster];
@@ -77,11 +80,16 @@ function _createSVG(width, height) {
 
         node.attr("cx", d => d.x)
             .attr("cy", d => d.y)
-
-
-
-
-
+            .on("mouseenter",(event,d)=>{
+            link.attr("display","none")
+            .filter(l=>l.source.id===d.id || l.target.id === d.id)
+            .attr("display","block");
+        })
+        .on("mouseleave",event=>{
+            link.attr("display","block");
+        }).on("mousedown",(event,d)=>{
+            window.open('https://twitter.com/i/user/' + d.userid, '_blank');
+        })
     }
 
     return Object.assign(svg.node(), {
@@ -117,11 +125,12 @@ function _createSVG(width, height) {
 
             node.append("title")
                 .text(function (d) {
-                    let user = d['id'];
+                    console.log(d);
+                    let userid = d['userid'];
                     let followers = d['followers'];
                     let unfollowers = d['unfollowers'];
                     let newfollowers = d['newfollowers'];
-                    return 'userid ' + user + '\n' + 'followers ' + followers + '\n' + 'unfollowers ' + unfollowers + '\n' + 'newfollowers ' + newfollowers;
+                    return 'userid ' + userid + '\n' + 'followers ' + followers + '\n' + 'unfollowers ' + unfollowers + '\n' + 'newfollowers ' + newfollowers;
                 });
             link = link
                 .data(links, d => `${d.source.id}\t${d.target.id}`)

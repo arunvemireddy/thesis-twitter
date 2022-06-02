@@ -3,7 +3,7 @@ const app = express();
 const fs = require('fs');
 const port = 3000
 app.use(express.json());
-const url = "mongodb://127.0.0.1:27017";
+const url = "mongodb://dhkim:dhkim@129.123.24.14:27017";
 const dbName = "TWI";
 const collectionName1 ="w_nodes";
 const collectionName2 ="w_edges";

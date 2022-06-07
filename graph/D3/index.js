@@ -19,11 +19,7 @@ function _createSVG(width, height) {
         .force("y", d3.forceY())
         .on("tick", ticked);
 
-    link = svg.append("g")
-        .attr("stroke", "#000")
-        .attr("stroke-width", 1.5)
-        .selectAll("line")
-        .attr('z-index', '5');
+    
 
     node = svg.append("g")
         .attr("stroke", "#fff")
@@ -50,6 +46,12 @@ function _createSVG(width, height) {
         }
     })
 
+    link = svg.append("g")
+        .attr("stroke", "#000")
+        .attr("stroke-width", 1.5)
+        .selectAll("line")
+        .attr('z-index', '5');
+
     function ticked() {
 
         svg.append('defs').append('marker')
@@ -68,15 +70,7 @@ function _createSVG(width, height) {
             .attr('fill', 'black')
             .style('stroke', 'black');
 
-        link.attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y)
-            .attr("marker-end", function (d) {
-                if (d.radius > 0 && d.arrow!=false) {
-                    return 'url(#arrowhead)'
-                }
-            })
+       
 
         node.attr("cx", d => d.x)
             .attr("cy", d => d.y)
@@ -89,6 +83,16 @@ function _createSVG(width, height) {
             link.attr("display","block");
         }).on("mousedown",(event,d)=>{
             window.open('https://twitter.com/i/user/' + d.userid, '_blank');
+        })
+
+        link.attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y)
+        .attr("marker-end", function (d) {
+            if (d.radius > 0 && d.arrow!=false) {
+                return 'url(#arrowhead)'
+            }
         })
     }
 

@@ -106,6 +106,44 @@ function _createSVG(width, height) {
             simulation.force("link").links(links);
             simulation.alpha(1).restart();
 
+
+
+            groupIds = d3.set(nodes.map(function(n){return +n.groups}))
+            .values()
+            .map(function(groupId){
+                return {
+                    groupId:groupId,
+                    count:nodes.filter(function(n){return +n.group == groupId;}).length
+                }
+            })
+            .filter(function(group){return group.count>2;})
+            .map(function(group){return group.groupId; });
+
+
+            paths = groups.selectAll('.path_placeholder')
+            .data(groupId,function(d){return +d;})
+            .enter()
+            .append('g')
+            .attr('class','path_placeholder')
+            .append('path')
+            .attr('stroke',function(d){return colors(d);})
+            .attr('fill',function(d){return colors(d);})
+            .attr("opacity",0)
+
+            paths.transition()
+            .duration(2000)
+            .attr("opacity",1);
+
+            // create polygon around cluster
+            var polygonGenerator = function(groupId) {
+            var node_coords = nodes
+            .filter(function(d) { return d.group == groupId; })
+            .data()
+            .map(function(d) { return [d.x, d.y]; });
+    
+            return d3.polygonHull(node_coords);
+            };
+            
             node = node
                 .data(nodes, d => d.id)
                 .join(enter => enter.append("circle"))
@@ -118,7 +156,7 @@ function _createSVG(width, height) {
                     }
                     if (d.radius > 10 & d.radius <= 25) {
                         return radius[1]
-                    }
+                    }   
                     if (d.radius > 25 & d.radius <= 50) {
                         return radius[2]
                     }
@@ -126,10 +164,11 @@ function _createSVG(width, height) {
                         return radius[3]
                     }
                 })
+        
 
             node.append("title")
                 .text(function (d) {
-                    console.log(d);
+                    //console.log(d);
                     let userid = d['userid'];
                     let followers = d['followers'];
                     let unfollowers = d['unfollowers'];
@@ -141,6 +180,8 @@ function _createSVG(width, height) {
                 .join("line");
                 link.attr('stroke', function (d) {
                     if (d.arrow == false && d.radius > 0) {
+                        console.log(this);
+                        d3.select(this).attr('class',d.source.userid);
                         return 'rgb(250, 2, 229)';
                     }else if(d.radius > 0){
                         return 'black';
@@ -148,6 +189,7 @@ function _createSVG(width, height) {
                         return 'white';
                     }
                 })
+              link.attr('background','red')
         }
     });
 }

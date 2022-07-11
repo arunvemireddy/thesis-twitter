@@ -1,10 +1,21 @@
 var svgRet = _createSVG(1200, 1000)
 var radius = ['3', '5', '7', '9', '11'];
 var colors = ['black', 'blue', 'green', 'red'];
+var color = d3.scaleOrdinal(d3.schemeCategory10);
 var svg;
 var simulation;
 var link;
 var node;
+var groupIds;
+var groups;
+var paths;
+var polygon;
+var centroid;
+var valueline = d3.line()
+      .x(function(d) { return d[0]; })
+      .y(function(d) { return d[1]; })
+      .curve(d3.curveCatmullRomClosed);
+var scaleFactor = 1;
 
 function _createSVG(width, height) {
     svg = d3.select('#div').append("svg")
@@ -19,14 +30,17 @@ function _createSVG(width, height) {
         .force("y", d3.forceY())
         .on("tick", ticked);
 
-    
 
+    // create groups
+    groups = svg.append('g').attr('class', 'groups');
+
+    // create nodes
     node = svg.append("g")
         .attr("stroke", "#fff")
         .attr("stroke-width", 1.5)
         .selectAll("circle")
-        .on("mouseenter",(event,d)=>{
-            link.attr("display","none")
+        .on("mouseenter", (event, d) => {
+            link.attr("display", "none")
         });
 
     node.attr("fill", function (d) {
@@ -46,11 +60,18 @@ function _createSVG(width, height) {
         }
     })
 
+    // create links
     link = svg.append("g")
         .attr("stroke", "#000")
         .attr("stroke-width", 1.5)
         .selectAll("line")
         .attr('z-index', '5');
+
+
+    
+
+
+    
 
     function ticked() {
 
@@ -70,30 +91,32 @@ function _createSVG(width, height) {
             .attr('fill', 'black')
             .style('stroke', 'black');
 
-       
+
 
         node.attr("cx", d => d.x)
             .attr("cy", d => d.y)
-            .on("mouseenter",(event,d)=>{
-            link.attr("display","none")
-            .filter(l=>l.source.id===d.id || l.target.id === d.id)
-            .attr("display","block");
-        })
-        .on("mouseleave",event=>{
-            link.attr("display","block");
-        }).on("mousedown",(event,d)=>{
-            window.open('https://twitter.com/i/user/' + d.userid, '_blank');
-        })
+            .on("mouseenter", (event, d) => {
+                link.attr("display", "none")
+                    .filter(l => l.source.id === d.id || l.target.id === d.id)
+                    .attr("display", "block");
+            })
+            .on("mouseleave", event => {
+                link.attr("display", "block");
+            }).on("mousedown", (event, d) => {
+                window.open('https://twitter.com/i/user/' + d.userid, '_blank');
+            })
 
         link.attr("x1", d => d.source.x)
-        .attr("y1", d => d.source.y)
-        .attr("x2", d => d.target.x)
-        .attr("y2", d => d.target.y)
-        .attr("marker-end", function (d) {
-            if (d.radius > 0 && d.arrow!=false) {
-                return 'url(#arrowhead)'
-            }
-        })
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y)
+            .attr("marker-end", function (d) {
+                if (d.radius > 0 && d.arrow != false) {
+                    return 'url(#arrowhead)'
+                }
+            })
+
+        
     }
 
     return Object.assign(svg.node(), {
@@ -107,92 +130,112 @@ function _createSVG(width, height) {
             simulation.alpha(1).restart();
 
 
+            node = node.data(nodes, d => d.id).join(enter => enter.append("circle"));
 
-            groupIds = d3.set(nodes.map(function(n){return +n.groups}))
-            .values()
-            .map(function(groupId){
-                return {
-                    groupId:groupId,
-                    count:nodes.filter(function(n){return +n.group == groupId;}).length
-                }
-            })
-            .filter(function(group){return group.count>2;})
-            .map(function(group){return group.groupId; });
-
-
-            paths = groups.selectAll('.path_placeholder')
-            .data(groupId,function(d){return +d;})
-            .enter()
-            .append('g')
-            .attr('class','path_placeholder')
-            .append('path')
-            .attr('stroke',function(d){return colors(d);})
-            .attr('fill',function(d){return colors(d);})
-            .attr("opacity",0)
-
-            paths.transition()
-            .duration(2000)
-            .attr("opacity",1);
-
-            // create polygon around cluster
-            var polygonGenerator = function(groupId) {
-            var node_coords = nodes
-            .filter(function(d) { return d.group == groupId; })
-            .data()
-            .map(function(d) { return [d.x, d.y]; });
-    
-            return d3.polygonHull(node_coords);
-            };
-            
-            node = node
-                .data(nodes, d => d.id)
-                .join(enter => enter.append("circle"))
             node.attr("fill", function (d) {
                 return colors[d.cluster];
+            }).attr("r", d => {
+                if (d.radius > 0 & d.radius <= 10) {
+                    return radius[0]
+                }
+                if (d.radius > 10 & d.radius <= 25) {
+                    return radius[1]
+                }
+                if (d.radius > 25 & d.radius <= 50) {
+                    return radius[2]
+                }
+                if (d.radius > 50) {
+                    return radius[3]
+                }
             })
-                .attr("r", d => {
-                    if (d.radius > 0 & d.radius <= 10) {
-                        return radius[0]
-                    }
-                    if (d.radius > 10 & d.radius <= 25) {
-                        return radius[1]
-                    }   
-                    if (d.radius > 25 & d.radius <= 50) {
-                        return radius[2]
-                    }
-                    if (d.radius > 50) {
-                        return radius[3]
-                    }
-                })
-        
+
 
             node.append("title")
                 .text(function (d) {
-                    //console.log(d);
                     let userid = d['userid'];
                     let followers = d['followers'];
                     let unfollowers = d['unfollowers'];
                     let newfollowers = d['newfollowers'];
                     return 'userid ' + userid + '\n' + 'followers ' + followers + '\n' + 'unfollowers ' + unfollowers + '\n' + 'newfollowers ' + newfollowers;
                 });
-            link = link
-                .data(links, d => `${d.source.id}\t${d.target.id}`)
-                .join("line");
-                link.attr('stroke', function (d) {
-                    if (d.arrow == false && d.radius > 0) {
-                        console.log(this);
-                        d3.select(this).attr('class',d.source.userid);
-                        return 'rgb(250, 2, 229)';
-                    }else if(d.radius > 0){
-                        return 'black';
-                    }else{
-                        return 'white';
-                    }
+
+            link = link.data(links, d => `${d.source.id}\t${d.target.id}`).join("line");
+
+            link.attr('stroke', function (d) {
+                if (d.arrow == false && d.radius > 0) {
+                    d3.select(this).attr('class', d.source.userid);
+                    return 'rgb(250, 2, 229)';
+                } else if (d.radius > 0) {
+                    return 'black';
+                } else {
+                    return 'none';
+                }
+            })
+
+            groupIds = d3.set(nodes.map(function (n) { return +n.group; }))
+                .values()
+                .map(function (groupId) {
+                    return {
+                        groupId: groupId,
+                        count: nodes.filter(function (n) { return +n.group == groupId; }).length
+                    };
                 })
-              link.attr('background','red')
+                .filter(function (group) { return group.count > 2; })
+                .map(function (group) { return group.groupId; });
+
+
+            paths = groups.selectAll('.path_placeholder')
+                .data(groupIds, function (d) { return +d; })
+                .enter()
+                .append('g')
+                .attr('class', 'path_placeholder')
+                .append('path')
+                .attr('stroke', function (d) { return color(d); })
+                .attr('fill', function (d) { return color(d); })
+                .attr("opacity", 0)
+
+            paths.transition()
+                .duration(2000)
+                .attr("opacity", 1);
+
+            updateGroups();
+
+            // create polygon around cluster
+            function polygonGenerator(groupId) {
+                var node_coords = node
+                    .filter(function (d) { return d.group == groupId; })
+                    .data()
+                    .map(function (d) { return [d.x, d.y]; });
+
+                return d3.polygonHull(node_coords);
+            };
+
+            function updateGroups() {
+                groupIds.forEach(function (groupId) {
+                    var path = paths.filter(function (d) {
+                        return d == groupId;
+                    })
+                        .attr("transform", 'scale(1) translate(0,0)')
+                        .attr('d', function (d) {
+                            polygon = polygonGenerator(d);
+                            centroid = d3.polygonCentroid(polygon);
+                            return valueline(
+                                polygon.map(function (point) {
+                                    return [point[0] - centroid[0], point[1] - centroid[1]];
+                                })
+                            );
+                        });
+                    d3.select(path.node().parentNode).attr('transform', 'trnaslate(' + centroid[0] + ',' + (centroid[1]) + ') scale(' + scaleFactor + ')');
+                })
+            }
         }
     });
 }
+
+
+
+
+
 
 _callApi(1);
 function _callApi(week) {
@@ -233,6 +276,7 @@ function loadagain(finaldata, week) {
         tnode['newfollowers'] = finaldata[i].newfollowers;
         tnode['unfollowers'] = finaldata[i].unfollowers;
         tnode['userid'] = finaldata[i].user;
+        tnode['group'] = 1;
         tnodes.push(tnode);
         for (let j = 1; j < 4; j++) {
             let tnode2 = {};
@@ -240,6 +284,7 @@ function loadagain(finaldata, week) {
             tnode2['cluster'] = j;
             tnode2['radius'] = finaldata[i][follower_status[j - 1]];
             tnode2['week'] = week;
+            // tnode2['group'] = 4;
             tnodes.push(tnode2);
 
 
@@ -255,7 +300,7 @@ function loadagain(finaldata, week) {
                     tedge['source'] = user_dic[d].toString();
                     tedge['target'] = (user_dic[finaldata[i].user] + j).toString();
                     tedge['radius'] = 1;
-                    tedge['arrow']=false
+                    tedge['arrow'] = false
                     tedge['cluster'] = 1;
                     tedges.push(tedge);
                 }

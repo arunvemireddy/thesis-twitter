@@ -225,7 +225,7 @@ function _createSVG(width, height) {
                                 })
                             );
                         });
-                    d3.select(path.node().parentNode).attr('transform', 'trnaslate(' + centroid[0] + ',' + (centroid[1]) + ') scale(' + scaleFactor + ')');
+                    d3.select(path.node().parentNode).attr('transform', 'translate(' + centroid[0] + ',' + (centroid[1]) + ') scale(' + scaleFactor + ')');
                 })
             }
         }

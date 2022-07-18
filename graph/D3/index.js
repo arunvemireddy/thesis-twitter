@@ -2,15 +2,7 @@ var svgRet = _createSVG(1200, 1000)
 var radius = ['3', '5', '7', '9', '11'];
 var colors = ['black', 'blue', 'green', 'red'];
 var color = d3.scaleOrdinal(d3.schemeCategory10);
-var svg;
-var simulation;
-var link;
-var node;
-var groupIds;
-var groups;
-var paths;
-var polygon;
-var centroid;
+var svg,simulation,link,node,groupIds,groups,paths,polygon,centroid;
 var valueline = d3.line()
       .x(function(d) { return d[0]; })
       .y(function(d) { return d[1]; })
@@ -39,41 +31,16 @@ function _createSVG(width, height) {
         .attr("stroke", "#fff")
         .attr("stroke-width", 1.5)
         .selectAll("circle")
-        .on("mouseenter", (event, d) => {
-            link.attr("display", "none")
-        });
-
-    node.attr("fill", function (d) {
-        return colors[d.cluster];
-    }).attr("r", d => {
-        if (d.radius > 0 & d.radius <= 10) {
-            return radius[0]
-        }
-        if (d.radius > 10 & d.radius <= 25) {
-            return radius[1]
-        }
-        if (d.radius > 25 & d.radius <= 50) {
-            return radius[2]
-        }
-        if (d.radius > 50) {
-            return radius[3]
-        }
-    })
+        .attr("fill", d=>colors[d.cluster])
+        .attr("r", d => (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : NaN);
 
     // create links
     link = svg.append("g")
         .attr("stroke", "#000")
         .attr("stroke-width", 1.5)
-        .selectAll("line")
-        .attr('z-index', '5');
+        .selectAll("line");
 
-
-    
-
-
-    
-
-    function ticked() {
+    function ticked() { // this is the function that being called every frame!
 
         svg.append('defs').append('marker')
             .attrs({
@@ -92,31 +59,27 @@ function _createSVG(width, height) {
             .style('stroke', 'black');
 
 
-
+        //position of nodes
         node.attr("cx", d => d.x)
             .attr("cy", d => d.y)
-            .on("mouseenter", (event, d) => {
-                link.attr("display", "none")
-                    .filter(l => l.source.id === d.id || l.target.id === d.id)
-                    .attr("display", "block");
-            })
-            .on("mouseleave", event => {
-                link.attr("display", "block");
-            }).on("mousedown", (event, d) => {
+            // .on("mouseenter", (event, d) => {
+            //     link.attr("display", "none")
+            //         .filter(l => l.source.id === d.id || l.target.id === d.id)
+            //         .attr("display", "block");
+            // })
+            // .on("mouseleave", event => {
+            //     link.attr("display", "block");
+            // })
+            /*.on("mousedown", (event, d) => {
                 window.open('https://twitter.com/i/user/' + d.userid, '_blank');
-            })
+            })*/
 
+        //position of links
         link.attr("x1", d => d.source.x)
             .attr("y1", d => d.source.y)
             .attr("x2", d => d.target.x)
             .attr("y2", d => d.target.y)
-            .attr("marker-end", function (d) {
-                if (d.radius > 0 && d.arrow != false) {
-                    return 'url(#arrowhead)'
-                }
-            })
-
-        
+            .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN)  
     }
 
     return Object.assign(svg.node(), {
@@ -129,25 +92,13 @@ function _createSVG(width, height) {
             simulation.force("link").links(links);
             simulation.alpha(1).restart();
 
-
             node = node.data(nodes, d => d.id).join(enter => enter.append("circle"));
 
-            node.attr("fill", function (d) {
-                return colors[d.cluster];
-            }).attr("r", d => {
-                if (d.radius > 0 & d.radius <= 10) {
-                    return radius[0]
-                }
-                if (d.radius > 10 & d.radius <= 25) {
-                    return radius[1]
-                }
-                if (d.radius > 25 & d.radius <= 50) {
-                    return radius[2]
-                }
-                if (d.radius > 50) {
-                    return radius[3]
-                }
-            })
+            node.attr("r", d => (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : NaN)
+                .attr("id", d => "n" + d.id)
+                .attr("fill", function (d) {
+                    return colors[d.cluster];
+                })
 
 
             node.append("title")
@@ -164,7 +115,30 @@ function _createSVG(width, height) {
             link.attr('stroke', function (d) {
                 if (d.arrow == false && d.radius > 0) {
                     d3.select(this).attr('class', d.source.userid);
+                    // console.log(d.source.id)
+//                    console.log( d3.selectAll("circle"))
+                    // console.log( d3.select("#n27"))
+                    
+                    d3.select("#n" + d.source.id).attr("fill", "lime");
+                    d3.select("#n" + d.target.id).attr("fill", "lime");
+                    d3.select("#n" + (d.target.id + 1)).attr("fill", "lime");
+                    d3.select("#n" + (d.target.id + 2)).attr("fill", "lime");
+                    d3.select("#n" + (d.target.id + 3)).attr("fill", "lime");
+                    d3.select("#n" + (d.source.id + 1)).attr("fill", "lime");
+                    d3.select("#n" + (d.source.id + 2)).attr("fill", "lime");
+                    d3.select("#n" + (d.source.id + 3)).attr("fill", "lime");
+
+                    d3.select("#n" + d.source.id).attr("group", d.source.id);
+                    d3.select("#n" + d.target.id).attr("group", d.target.id);
+                    d3.select("#n" + (d.target.id + 1)).attr("group", (d.target.id + 1));
+                    d3.select("#n" + (d.target.id + 2)).attr("group", (d.target.id + 2));
+                    d3.select("#n" + (d.target.id + 3)).attr("group", (d.target.id + 3));
+                    d3.select("#n" + (d.source.id + 1)).attr("group", (d.source.id + 1));
+                    d3.select("#n" + (d.source.id + 2)).attr("group", (d.source.id + 2));
+                    d3.select("#n" + (d.source.id + 3)).attr("group", (d.source.id + 3));
+
                     return 'rgb(250, 2, 229)';
+
                 } else if (d.radius > 0) {
                     return 'black';
                 } else {
@@ -276,7 +250,7 @@ function loadagain(finaldata, week) {
         tnode['newfollowers'] = finaldata[i].newfollowers;
         tnode['unfollowers'] = finaldata[i].unfollowers;
         tnode['userid'] = finaldata[i].user;
-        tnode['group'] = 1;
+       // tnode['group'] = ;
         tnodes.push(tnode);
         for (let j = 1; j < 4; j++) {
             let tnode2 = {};
@@ -284,7 +258,7 @@ function loadagain(finaldata, week) {
             tnode2['cluster'] = j;
             tnode2['radius'] = finaldata[i][follower_status[j - 1]];
             tnode2['week'] = week;
-            // tnode2['group'] = 4;
+            //tnode2['group'] = 1;
             tnodes.push(tnode2);
 
 

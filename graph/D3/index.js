@@ -3,15 +3,14 @@ var radius = ['3', '5', '7', '9', '11'];
 var colors = ['black', 'blue', 'green', 'red'];
 var color = d3.scaleOrdinal(d3.schemeCategory10);
 var scaleFactor = 1;
-var svg,simulation,link,node,groupIds,groups,paths,polygon,centroid;
-var valueline = d3.line()
-      .x(function(d) { return d[0]; })
-      .y(function(d) { return d[1]; })
-      .curve(d3.curveCatmullRomClosed);
+var svg,simulation,link,node,groupIds,groups,paths,polygon,centroid,valueline,graph;
+
 
 
 function _createSVG(width, height) {
-    svg = d3.select('#div').append("svg")
+    
+
+    svg = d3.select('#svg').append("svg")
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [-width / 2, -height / 2, width, height]);
@@ -19,26 +18,24 @@ function _createSVG(width, height) {
     simulation = d3.forceSimulation()
         .force("charge", d3.forceManyBody().strength(-20))
         .force("link", d3.forceLink().id(d => d.id).distance(30))
+        // .force('center', d3.forceCenter(width / 2, height / 2))
         .force("x", d3.forceX())
         .force("y", d3.forceY())
         .on("tick", ticked);
+
+    valueline = d3.line()
+    .x(function(d) { return d[0]; })
+    .y(function(d) { return d[1]; })
+    .curve(d3.curveCatmullRomClosed);
 
     // create groups
     groups = svg.append('g').attr('class', 'groups');
 
     // create nodes
-    node = svg.append("g")
-        .attr("stroke", "#fff")
-        .attr("stroke-width", 1.5)
-        .selectAll("circle")
-        .attr("fill", d=>colors[d.cluster])
-        .attr("r", d => (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : null);
-
+    node = svg.append("g").selectAll("circle")
+     
     // create links
-    link = svg.append("g")
-        .attr("stroke", "#000")
-        .attr("stroke-width", 1.5)
-        .selectAll("line");
+    link = svg.append("g").selectAll("line");
 
     function ticked() { // this is the function that being called every frame!
         svg.append('defs').append('marker')
@@ -78,7 +75,9 @@ function _createSVG(width, height) {
             .attr("y1", d => d.source.y)
             .attr("x2", d => d.target.x)
             .attr("y2", d => d.target.y)
-            .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN)  
+            .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);  
+
+      //  updateGroups();
     }
 
     return Object.assign(svg.node(), {
@@ -113,24 +112,25 @@ function _createSVG(width, height) {
 
             link.attr('stroke', function (d) {
                 if (d.arrow == false && d.radius > 0) {    
-                    d3.select("#n" + d.source.id).attr("fill", "lime");
-                    d3.select("#n" + (d.source.id + 1)).attr("fill", "lime");
-                    d3.select("#n" + (d.source.id + 2)).attr("fill", "lime");
-                    d3.select("#n" + (d.source.id + 3)).attr("fill", "lime");
-                    d3.select("#n" + d.target.id).attr("fill", "lime");
-                    d3.select("#n" + (d.target.id + 1)).attr("fill", "lime");
-                    d3.select("#n" + (d.target.id + 2)).attr("fill", "lime");
-                    d3.select("#n" + (d.target.id + 3)).attr("fill", "lime");
+                    // d3.select("#n" + d.source.id).attr("fill", "lime");
+                    // d3.select("#n" + (d.source.id + 1)).attr("fill", "lime");
+                    // d3.select("#n" + (d.source.id + 2)).attr("fill", "lime");
+                    // d3.select("#n" + (d.source.id + 3)).attr("fill", "lime");
+                    // d3.select("#n" + d.target.id).attr("fill", "lime");
+                    // d3.select("#n" + (d.target.id + 1)).attr("fill", "lime");
+                    // d3.select("#n" + (d.target.id + 2)).attr("fill", "lime");
+                    // d3.select("#n" + (d.target.id + 3)).attr("fill", "lime");
                     
 
-                    d3.select("#n" + d.source.id).attr("group", d.source.id).attr('class','node');
-                    d3.select("#n" + d.target.id).attr("group", d.source.id).attr('class','node');
-                    d3.select("#n" + (d.target.id + 1)).attr("group", (d.source.id)).attr('class','node');
-                    d3.select("#n" + (d.target.id + 2)).attr("group", (d.source.id)).attr('class','node');
-                    d3.select("#n" + (d.target.id + 3)).attr("group", (d.source.id)).attr('class','node');
-                    d3.select("#n" + (d.source.id + 1)).attr("group", (d.source.id)).attr('class','node');
-                    d3.select("#n" + (d.source.id + 2)).attr("group", (d.source.id)).attr('class','node');
-                    d3.select("#n" + (d.source.id + 3)).attr("group", (d.source.id)).attr('class','node');
+                    d3.select("#n" + d.source.id).attr("group", d.source.id);
+                    d3.select("#n" + (d.source.id + 1)).attr("group", (d.source.id));
+                    d3.select("#n" + (d.source.id + 2)).attr("group", (d.source.id));
+                    d3.select("#n" + (d.source.id + 3)).attr("group", (d.source.id));
+                    d3.select("#n" + d.target.id).attr("group", d.source.id);
+                    d3.select("#n" + (d.target.id + 1)).attr("group", (d.source.id));
+                    d3.select("#n" + (d.target.id + 2)).attr("group", (d.source.id));
+                    d3.select("#n" + (d.target.id + 3)).attr("group", (d.source.id));
+               
 
                     return 'rgb(250, 2, 229)';
 
@@ -142,17 +142,14 @@ function _createSVG(width, height) {
                 }
             })
 
-            console.log(nodes.length);
+      
 
             for(let i=0;i<nodes.length;i++){
                 
                 if (d3.select("#n"+nodes[i]['id']).attr("group")!=null){
                     nodes[i]['group']=d3.select("#n"+nodes[i]['id']).attr("group");
-                    console.log(d3.select("#n"+nodes[i]['id']).attr("group"));
                 }
             }
-
-            console.log(nodes);
 
             groupIds = d3.set(nodes.map(function (n) { return +n.group; }))
                 .values()
@@ -164,7 +161,8 @@ function _createSVG(width, height) {
                 })
                 .filter(function (group) { return group.count > 2; })
                 .map(function (group) { return group.groupId; });
-
+            
+            console.log(groupIds);
 
             paths = groups.selectAll('.path_placeholder')
                 .data(groupIds, function (d) { return +d; })
@@ -180,7 +178,7 @@ function _createSVG(width, height) {
                 .duration(2000)
                 .attr("opacity", 1);
 
-            updateGroups();
+            
 
             // create polygon around cluster
             function polygonGenerator(groupId) {
@@ -192,11 +190,10 @@ function _createSVG(width, height) {
                 return d3.polygonHull(node_coords);
             };
 
+            updateGroups();
             function updateGroups() {
                 groupIds.forEach(function (groupId) {
-                    var path = paths.filter(function (d) {
-                        return d == groupId;
-                    })
+                    var path = paths.filter(function (d) {return d == groupId;})
                         .attr('transform', 'scale(1) translate(0,0)')
                         .attr('d', function (d) {
                             polygon = polygonGenerator(d);
@@ -210,6 +207,8 @@ function _createSVG(width, height) {
                     d3.select(path.node().parentNode).attr('transform', 'translate(' + centroid[0] + ',' + (centroid[1]) + ') scale(' + scaleFactor + ')');
                 })
             }
+
+
         }
     });
 }
@@ -290,7 +289,7 @@ function loadagain(finaldata, week) {
             )
         }
     }
-    let graph = { "nodes": tnodes, "links": tedges }
+    graph = { "nodes": tnodes, "links": tedges }
     svgRet.update(graph);
 }
 

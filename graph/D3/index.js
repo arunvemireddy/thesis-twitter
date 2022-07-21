@@ -135,7 +135,8 @@ function _createSVG(width, height) {
                     return 'rgb(250, 2, 229)';
 
                 } else if (d.radius > 0) {
-                    return 'black';
+                    
+                    return 'black'; 
                 } else {
                     return 'none';
                 }
@@ -146,10 +147,12 @@ function _createSVG(width, height) {
             for(let i=0;i<nodes.length;i++){
                 
                 if (d3.select("#n"+nodes[i]['id']).attr("group")!=null){
-                    nodes[i]['group']=d3.select("#n"+nodes[i]['id']).attr("group")!=null;
+                    nodes[i]['group']=d3.select("#n"+nodes[i]['id']).attr("group");
                     console.log(d3.select("#n"+nodes[i]['id']).attr("group"));
                 }
             }
+
+            console.log(nodes);
 
             groupIds = d3.set(nodes.map(function (n) { return +n.group; }))
                 .values()

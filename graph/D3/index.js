@@ -109,45 +109,64 @@ function _createSVG(width, height) {
                 });
 
             
-
+            link.attr('stroke',function(d){
+                d3.select("#n" + d.source.id).attr("class", '');
+                d3.select("#n" + d.target.id).attr("class", '');
+                return 'none';
+            })
             link.attr('stroke', function (d) {
-                if (d.arrow == false && d.radius > 0) {    
-                    // d3.select("#n" + d.source.id).attr("fill", "lime");
-                    // d3.select("#n" + (d.source.id + 1)).attr("fill", "lime");
-                    // d3.select("#n" + (d.source.id + 2)).attr("fill", "lime");
-                    // d3.select("#n" + (d.source.id + 3)).attr("fill", "lime");
-                    // d3.select("#n" + d.target.id).attr("fill", "lime");
-                    // d3.select("#n" + (d.target.id + 1)).attr("fill", "lime");
-                    // d3.select("#n" + (d.target.id + 2)).attr("fill", "lime");
-                    // d3.select("#n" + (d.target.id + 3)).attr("fill", "lime");
+                
+                if (d.arrow == false && d.radius > 0) {   
+                    if(d.source.groupid == undefined && d.target.groupid == undefined){
+                        d.source.groupid=d.source.id;
+                        d.target.groupid=d.source.id;
+                        d3.select("#n" + d.source.id).attr("class", d.source.groupid);
+                        d3.select("#n" + d.target.id).attr("class", d.target.groupid);
+                     
+                    }else if(d.target.groupid!=undefined){
+                        d.source.groupid=d.target.groupid;
+                        d3.select("#n" + d.source.id).attr("class", d.source.groupid);
+                        d3.select("#n" + d.target.id).attr("class", d.target.groupid);
+                    }else if(d.source.groupid!=undefined){
+                        d.target.groupid = d.source.groupid;
+                        d3.select("#n" + d.source.id).attr("class", d.source.groupid);
+                        d3.select("#n" + d.target.id).attr("class", d.target.groupid);
+                    }
                     
-
-                    d3.select("#n" + d.source.id).attr("group", d.source.id);
-                    d3.select("#n" + (d.source.id + 1)).attr("group", (d.source.id));
-                    d3.select("#n" + (d.source.id + 2)).attr("group", (d.source.id));
-                    d3.select("#n" + (d.source.id + 3)).attr("group", (d.source.id));
-                    d3.select("#n" + d.target.id).attr("group", d.source.id);
-                    d3.select("#n" + (d.target.id + 1)).attr("group", (d.source.id));
-                    d3.select("#n" + (d.target.id + 2)).attr("group", (d.source.id));
-                    d3.select("#n" + (d.target.id + 3)).attr("group", (d.source.id));
-               
-
                     return 'rgb(250, 2, 229)';
 
                 } else if (d.radius > 0) {
-                    
+                    if (d.arrow == false && d.radius > 0) {   
+                        if(d.source.groupid == undefined && d.target.groupid == undefined){
+                            d.source.groupid=d.source.id;
+                            d.target.groupid=d.source.id;
+                            d3.select("#n" + d.source.id).attr("class", d.source.groupid);
+                            d3.select("#n" + d.target.id).attr("class", d.target.groupid);
+                         
+                        }else if(d.target.groupid!=undefined){
+                            d.source.groupid=d.target.groupid;
+                            d3.select("#n" + d.source.id).attr("class", d.source.groupid);
+                            d3.select("#n" + d.target.id).attr("class", d.target.groupid);
+                        }else if(d.source.groupid!=undefined){
+                            d.target.groupid = d.source.groupid;
+                            d3.select("#n" + d.source.id).attr("class", d.source.groupid);
+                            d3.select("#n" + d.target.id).attr("class", d.target.groupid);
+                        }
+                        
+                    }
                     return 'black'; 
                 } else {
                     return 'none';
                 }
             })
+            
 
       
 
             for(let i=0;i<nodes.length;i++){
                 
-                if (d3.select("#n"+nodes[i]['id']).attr("group")!=null){
-                    nodes[i]['group']=d3.select("#n"+nodes[i]['id']).attr("group");
+                if (d3.select("#n"+nodes[i]['id']).attr("class")!=null){
+                    nodes[i]['group']=d3.select("#n"+nodes[i]['id']).attr("class");
                 }
             }
 
@@ -163,6 +182,18 @@ function _createSVG(width, height) {
                 .map(function (group) { return group.groupId; });
             
             console.log(groupIds);
+
+            for(let i=0;i<nodes.length;i++){
+                if (d3.select("#n"+nodes[i]['id']).attr("class")!=null){
+                   let x= d3.select("#n"+nodes[i]['id']).attr("class");
+                   x=x.toString();
+                   if(groupIds.includes(x)){
+                       d3.select("#n"+nodes[i]['id']).attr("fill","lime")
+                   }
+                }
+            }
+
+          
 
             paths = groups.selectAll('.path_placeholder')
                 .data(groupIds, function (d) { return +d; })
@@ -182,6 +213,8 @@ function _createSVG(width, height) {
 
             // create polygon around cluster
             function polygonGenerator(groupId) {
+                
+
                 var node_coords = node
                     .filter(function (d) { return d.group == groupId; })
                     .data()
@@ -190,7 +223,7 @@ function _createSVG(width, height) {
                 return d3.polygonHull(node_coords);
             };
 
-            updateGroups();
+          updateGroups();
             function updateGroups() {
                 groupIds.forEach(function (groupId) {
                     var path = paths.filter(function (d) {return d == groupId;})

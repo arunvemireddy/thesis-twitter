@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const fs = require('fs');
-const port = 3000
+const port = 4000
 app.use(express.json());
 const url = "mongodb://127.0.0.1:27017";
 const dbName = "TWI";

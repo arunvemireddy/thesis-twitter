@@ -1,4 +1,4 @@
-var svgRet = _createSVG(1200, 1000)
+var svgRet = _createSVG(1500, 1000)
 var radius = ['3', '5', '7', '9', '11'];
 var colors = ['black', 'blue', 'green', 'red'];
 var color = d3.scaleOrdinal(d3.schemeCategory10);
@@ -14,7 +14,7 @@ function _createSVG(width, height) {
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [-width / 2, -height / 2, width, height]);
-        
+
     // svg zoom
     svg.call(d3.zoom().on("zoom", function () {
         d3.select('svg').attr("transform", d3.event.transform)}));
@@ -22,7 +22,6 @@ function _createSVG(width, height) {
     simulation = d3.forceSimulation()
         .force("charge", d3.forceManyBody().strength(-20))
         .force("link", d3.forceLink().id(d => d.id).distance(30))
-        // .force('center', d3.forceCenter(width / 2, height / 2))
         .force("x", d3.forceX())
         .force("y", d3.forceY())
         .on("tick", ticked);
@@ -93,9 +92,12 @@ function _createSVG(width, height) {
             simulation.nodes(nodes);
             simulation.force("link").links(links);
             simulation.alpha(1).restart();
+            simulation.on('tick',ticked)
 
             node = node.data(nodes, d => d.id).join(enter => enter.append("circle"));
             link = link.data(links, d => `${d.s}\t${d.t}`).join("line");
+
+            
 
             node.attr("r", d => (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : null)
                 .attr("id", d => "n" + d.id)
@@ -110,7 +112,7 @@ function _createSVG(width, height) {
                 });
 
             for(let i=0;i<nodes.length;i++){
-                nodes[i]['group']=NaN;
+                nodes[i]['group']=undefined;
             }
     
             link.attr('stroke',function(d){
@@ -121,8 +123,9 @@ function _createSVG(width, height) {
             
             link.attr('stroke', function (d) {
                 if (d.radius > 0) {   
-                   d3.select("#n"+d.source.id).attr("class",d.id);
-                   d3.select("#n"+d.target.id).attr("class",d.id);
+                    let x= "m"+d.id;
+                    d3.select("#n"+d.source.id).attr("class",x);
+                    d3.select("#n"+d.target.id).attr("class",x);
                     if(d.arrow==false){
                         return 'rgb(250,2,229)';
                     }else{
@@ -132,27 +135,41 @@ function _createSVG(width, height) {
                     return 'none';
                 }
             })
+
+            node.on("mouseenter", (event, d) => {
+                let x=event.id;
+                let c = d3.select("#n"+x).attr('class').toString();
+                d3.selectAll("."+c).attr("fill","red");
+             })
+             .on("mouseleave", (event, d) => {
+                let x=event.id;
+                let c = d3.select("#n"+x).attr('class').toString();
+                d3.selectAll("."+c).attr("fill","lime");
+             })
             
            
             for(let i=0;i<nodes.length;i++){
-                if (d3.select("#n"+nodes[i]['id']).attr("class")!=undefined){
-                    nodes[i]['group']=d3.select("#n"+nodes[i]['id']).attr("class");
-                }
+               if (d3.select("#n"+nodes[i]['id']).attr("class")!=undefined){
+                    let x = d3.select("#n"+nodes[i]['id']).attr("class");
+                    x=x.substring(1);
+                    nodes[i]['group']=x;
+               }
             }
 
             let groupIds = d3.set(nodes.map(function (n) { return +n.group; }))
                 .values()
-                .map(function (groupId) { return { groupId: groupId,count: nodes.filter(function (n) { return +n.group == groupId; }).length};})
+                .map(function (groupId) { 
+                    return { groupId: groupId,count: nodes.filter(function (n) { 
+                        return +n.group == groupId; }).length};})
                 .filter(function (group) { 
-                    // console.log(group,group.count); 
                     return  group.count > 4; })
                 .map(function (group) { return group.groupId; });
             
-            //console.log(groupIds);
+            console.log(groupIds);
             for(let i=0;i<nodes.length;i++){
                 if (d3.select("#n"+nodes[i]['id']).attr("class")!=undefined){
                    let x= d3.select("#n"+nodes[i]['id']).attr("class");
-                   x=x.toString();
+                   x=x.toString().substring(1);
                    if(groupIds.includes(x)){
                        d3.select("#n"+nodes[i]['id']).attr("fill","lime")
                    }
@@ -179,25 +196,28 @@ function _createSVG(width, height) {
 
             // create polygon around cluster
             function polygonGenerator(groupId) {
-                
 
                 var node_coords = node
-                    .filter(function (d) { return d.group == groupId; })
+                    .filter(function (d) { 
+                        return d.group == groupId; })
                     .data()
                     .map(function (d) { return [d.x, d.y]; });
-
                 return d3.polygonHull(node_coords);
             };
-
-          //updateGroups();
+           // groupIds = groupIds.filter(function(e){return e!=0});
+           // updateGroups();
             function updateGroups() {
+                // console.log(groupIds);
                 groupIds.forEach(function (groupId) {
+                    console.log(groupIds);
                     var path = paths.filter(function (d) {return d == groupId;})
                         .attr('transform', 'scale(1) translate(0,0)')
                         .attr('d', function (d) {
-                            polygon = polygonGenerator(d);
-                            centroid = d3.polygonCentroid(polygon);
-                            return valueline(
+                                console.log(d,"test1")
+                                polygon = polygonGenerator(d);
+                                console.log(polygon,"test2")
+                                centroid = d3.polygonCentroid(polygon);
+                               return valueline(
                                 polygon.map(function (point) {
                                     return [point[0] - centroid[0], point[1] - centroid[1]];
                                 })
@@ -296,18 +316,20 @@ function loadagain(finaldata, week) {
     let my_dict=tedges;
     let dict_length = my_dict.length;
 
-    Graph(my_dict.length+1);
+    Graph(tnodes.length);
+    function Graph(v){   
+        V=v;
+        for (let i = 0; i < v; i++) {
+            adjListArray.push([]);
+        }
+    }
+    
     for(var i = 0 ; i < dict_length ; i++){
         addEdge(my_dict[i]['source'],my_dict[i]['target']);
      }
      connectedComponents();
     
-    function Graph(v){   
-        V=v;
-        for (let i = 0; i < tnodes.length; i++) {
-            adjListArray.push([]);
-        }
-    }
+    
  
     function addEdge(src,dest){
         adjListArray[src].push(dest);
@@ -338,9 +360,13 @@ function loadagain(finaldata, week) {
     }
     
     for(var i = 0 ; i < my_dict.length ; i++){
+        if(ids[my_dict[i].source]==undefined){
+            console.log(my_dict[i].source);
+        }
         my_dict[i].id = ids[my_dict[i].source];
     }
 
+ 
     graph = { "nodes": tnodes, "links": my_dict }
     svgRet.update(graph);
 }

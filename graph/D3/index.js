@@ -3,22 +3,22 @@ var radius = ['3', '5', '7', '9', '11'];
 var colors = ['black', 'blue', 'green', 'red'];
 var color = d3.scaleOrdinal(d3.schemeCategory10);
 var scaleFactor = 1;
+var w=1;
 var svg,simulation,link,node,groupIds,groups,paths,valueline,graph,select,options,curveTypes,path;
 
 function _createSVG(width, height) {
 
-    // create svg
-    svg = d3.select('#svg').append("svg")
+    svg = d3.select('#svg').append("svg")  // create svg
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [-width / 2, -height / 2, width, height]);
 
-    // svg zoom
-    svg.call(d3.zoom().on("zoom", function () {
+    
+    svg.call(d3.zoom().on("zoom", function () {   // svg zoom
         d3.select('svg').attr("transform", d3.event.transform)}));
 
-    // create simulation
-    simulation = d3.forceSimulation()
+    
+    simulation = d3.forceSimulation()  // create simulation
         .force("charge", d3.forceManyBody().strength(-20))
         .force("link", d3.forceLink().id(d => d.id).distance(30))
         .force("x", d3.forceX())
@@ -79,8 +79,6 @@ function _createSVG(width, height) {
             .attr("x2", d => d.target.x)
             .attr("y2", d => d.target.y)
             .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);  
-
-      //  updateGroups();
     }
 
     return Object.assign(svg.node(), {
@@ -112,39 +110,34 @@ function _createSVG(width, height) {
             links = links.map(d => Object.assign({}, d));
             var linkNodes = [];
             
-            // links.forEach(function(d){
-            //     linkNodes.push({
-            //         source: nodes[d.source.id],
-            //         target: nodes[d.target.id]
-            //     })
-            // })
+            links.forEach(function(d){
+                linkNodes.push({
+                    source: nodes[d.source.id],
+                    target: nodes[d.target.id]
+                })
+            })
 
-            simulation.nodes(nodes.concat(linkNodes));
+            simulation.nodes(nodes);
             simulation.force("link").links(links);
             simulation.alpha(1).restart();
+            
 
             node = node.data(nodes, d => d.id).join(enter => enter.append("circle"));
             link = link.data(links, d => `${d.s}\t${d.t}`).join("line");
-            
-            var linkNode = svg.selectAll(".link-node")
-                                .data(linkNodes)
-                                .enter().append("circle")
-                                .attr("class", "link-node")
-                                .attr("r", 2)
-                                .style("fill", "#ccc");
 
             node.attr("r", d => (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : null)
                 .attr("id", d => "n" + d.id)
                 .attr("opacity",0.5)
                 .attr("fill", d=> colors[d.cluster])
-                .append("title")
-                .text(function (d) {
-                    let userid = d['userid'];
-                    let followers = d['followers'];
-                    let unfollowers = d['unfollowers'];
-                    let newfollowers = d['newfollowers'];
-                    return 'userid ' + userid + '\n' + 'followers ' + followers + '\n' + 'unfollowers ' + unfollowers + '\n' + 'newfollowers ' + newfollowers;
-                });
+                .append("title");
+            node.exit().remove();
+            node.select('title').text(function (d) {
+                let userid = d['userid'];
+                let followers = d['followers'];
+                let unfollowers = d['unfollowers'];
+                let newfollowers = d['newfollowers'];
+                return 'userid ' + userid + '\n' + 'followers ' + followers + '\n' + 'unfollowers ' + unfollowers + '\n' + 'newfollowers ' + newfollowers;
+            });
             
             for(let i=0;i<nodes.length;i++){  // making groups of nodes undefined on iteration
                 nodes[i]['group']=undefined;
@@ -243,32 +236,30 @@ function _createSVG(width, height) {
             };
 
            groupIds = groupIds.filter(function(e){return e!=0}); // remove groupId of hidden nodes;
-           
-           simulation.on("tick",updateGroups);
-           
-            updateGroups();
-            function updateGroups() {
-                
-                let polygon,centroid;
-                node.attr("cx", d => d.x) // position of nodes
-                    .attr("cy", d => d.y)
-                link.attr("x1", d => d.source.x) // position of links
-                    .attr("y1", d => d.source.y)
-                    .attr("x2", d => d.target.x)
-                    .attr("y2", d => d.target.y)
-                    .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);  
+           simulation.on("tick",tick);
 
-                // linkNode.attr("cx", function(d) { return d.x = (d.source.x + d.target.x) * 0.5; })
-                // .attr("cy", function(d) { return d.y = (d.source.y + d.target.y) * 0.5; });
+           function tick(){
+                new_tick();
+               updateGroups();
+           }
+           function new_tick(){
+            node.attr("cx", d => d.x) // position of nodes
+                .attr("cy", d => d.y);
+
+           link.attr("x1", d => d.source.x) // position of links
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y)
+                .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);  
+           }
            
-                
+            function updateGroups() {
+                let polygon,centroid;
                 groupIds.forEach(function (groupId) {
-                    
                    path = paths.filter(function (d) {return d == groupId;})
                         .attr('transform', 'scale(1) translate(0,0)')
                         .attr('d', function (d) {
                                 polygon = polygonGenerator(d);
-                                
                                 centroid = d3.polygonCentroid(polygon);
                                return valueline(
                                 polygon.map(function (point) {
@@ -276,8 +267,7 @@ function _createSVG(width, height) {
                                 })
                             );
                         });
-                       
-                   d3.select(path.node().parentNode).transition().duration(100).attr('transform', 'translate(' + centroid[0] + ',' + (centroid[1]) + ') scale(' + scaleFactor + ')');
+                   d3.select(path.node().parentNode).attr('transform', 'translate(' + centroid[0] + ',' + (centroid[1]) + ') scale(' + scaleFactor + ')');
                 })
             }
         }
@@ -285,7 +275,7 @@ function _createSVG(width, height) {
 }
 
 
-_callApi(1);
+_callApi(w);
 function _callApi(week) {
     let finaldata = [];
     $.ajax({
@@ -377,8 +367,6 @@ function loadagain(finaldata, week) {
      }
      connectedComponents();
     
-    
- 
     function addEdge(src,dest){
         adjListArray[src].push(dest);
         adjListArray[dest].push(src);
@@ -414,7 +402,6 @@ function loadagain(finaldata, week) {
         my_dict[i].id = ids[my_dict[i].source];
     }
 
- 
     graph = { "nodes": tnodes, "links": my_dict }
     svgRet.update(graph);
 }
@@ -423,8 +410,8 @@ export default function define(runtime, observer) {
 
 }
 
-//week slider
-makeSlider("Week", "week", 1, 15, 1);
+
+makeSlider("Week", "week", 1, 15, 1);  //week slider
 
 function makeSlider(name, attr, min, max, defaultValue) {
     d3.select(".sliders").append("label").text(name);

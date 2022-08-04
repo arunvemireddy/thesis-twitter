@@ -23,63 +23,18 @@ function _createSVG(width, height) {
         .force("link", d3.forceLink().id(d => d.id).distance(30))
         .force("x", d3.forceX())
         .force("y", d3.forceY())
-        .on("tick",ticked);
 
     valueline = d3.line()
                     .x(function(d) { return d[0]; })
                     .y(function(d) { return d[1]; })
                     .curve(d3.curveCatmullRomClosed);
 
-    // create groups
-    groups = svg.append('g').attr('class', 'groups');
+    
+    groups = svg.append('g').attr('class', 'groups'); // create groups
 
-    // create nodes
-    node = svg.append("g").selectAll("circle")
+    node = svg.append("g").selectAll("circle") // create nodes
      
-    // create links
-    link = svg.append("g").selectAll("line");
-
-    function ticked() { // this is the function that being called every frame!
-        svg.append('defs').append('marker')
-            .attrs({
-                'id': 'arrowhead',
-                'viewBox': '-0 -5 10 10',
-                'refX': 13,
-                'refY': 0,
-                'orient': 'auto',
-                'markerWidth': 5,
-                'markerHeight': 5,
-                'xoverflow': 'visible'
-            })
-            .append('svg:path')
-            .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
-            .attr('fill', 'black')
-            .style('stroke', 'black');
-
-
-        //position of nodes
-        node.attr("cx", d => d.x)
-            .attr("cy", d => d.y)
-            
-            // .on("mouseenter", (event, d) => {
-            //     link.attr("display", "none")
-            //         .filter(l => l.source.id === d.id || l.target.id === d.id)
-            //         .attr("display", "block");
-            // })
-            // .on("mouseleave", event => {
-            //     link.attr("display", "block");
-            // })
-            /*.on("mousedown", (event, d) => {
-                window.open('https://twitter.com/i/user/' + d.userid, '_blank');
-            })*/
-
-        //position of links
-        link.attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y)
-            .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);  
-    }
+    link = svg.append("g").selectAll("line"); // create links
 
     return Object.assign(svg.node(), {
         update({ nodes, links }) {
@@ -197,7 +152,6 @@ function _createSVG(width, height) {
                 .map(function (group) { return group.groupId; });
             
           // console.log(groupIds);
-
             nodes.forEach(function(d,i){ // highlighting nodes in cluster
                 if (d3.select("#n"+d['id']).attr("class")!=undefined){
                     let x= d3.select("#n"+d['id']).attr("class");
@@ -210,8 +164,6 @@ function _createSVG(width, height) {
                  }
             })
 
-          
-            
             paths = groups.selectAll('.path_placeholder')
                 .data(groupIds, function (d) { return +d; })
                 .enter()
@@ -243,6 +195,7 @@ function _createSVG(width, height) {
                updateGroups();
            }
            function new_tick(){
+
             node.attr("cx", d => d.x) // position of nodes
                 .attr("cy", d => d.y);
 
@@ -251,6 +204,21 @@ function _createSVG(width, height) {
                 .attr("x2", d => d.target.x)
                 .attr("y2", d => d.target.y)
                 .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);  
+            svg.append('defs').append('marker')
+                .attrs({
+                    'id': 'arrowhead',
+                    'viewBox': '-0 -5 10 10',
+                    'refX': 13,
+                    'refY': 0,
+                    'orient': 'auto',
+                    'markerWidth': 5,
+                    'markerHeight': 5,
+                    'xoverflow': 'visible'
+                })
+                .append('svg:path')
+                .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+                .attr('fill', 'black')
+                .style('stroke', 'black');
            }
            
             function updateGroups() {

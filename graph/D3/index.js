@@ -19,7 +19,7 @@ function _createSVG(width, height) {
 
     
     simulation = d3.forceSimulation()  // create simulation
-        .force("charge", d3.forceManyBody().strength(-20))
+        .force("charge", d3.forceManyBody().strength(-60))
         .force("link", d3.forceLink().id(d => d.id).distance(30))
         .force("x", d3.forceX())
         .force("y", d3.forceY())
@@ -40,9 +40,10 @@ function _createSVG(width, height) {
         update({ nodes, links }) {
             
         curveTypes = ['curveBasisClosed', 'curveCardinalClosed', 'curveCatmullRomClosed', 'curveLinearClosed'];
-        groupIds=undefined;
-        d3.selectAll(".path_placeholder").remove();
-        if(select==undefined){
+        groupIds=[];
+        d3.selectAll(".path_placeholder").remove();  // removing old polygons
+
+        if(select==undefined){    // curve type drop down
             select = d3.select('#curveSettings')
                     .append('select')
                     .attr('class','select')
@@ -60,31 +61,74 @@ function _createSVG(width, height) {
                     .text(function (d) { return d; });
         }
         
-            const old = new Map(node.data().map(d => [d.id, d]));
-            nodes = nodes.map(d => Object.assign(old.get(d.id) || {}, d));
-            links = links.map(d => Object.assign({}, d));
-            var linkNodes = [];
             
-            links.forEach(function(d){
-                linkNodes.push({
-                    source: nodes[d.source.id],
-                    target: nodes[d.target.id]
-                })
+            links.forEach(function(d,i){
+                assignGroup(d.source,d.target,d.id,i);
             })
 
-            simulation.nodes(nodes);
-            simulation.force("link").links(links);
-            simulation.alpha(1).restart();
-            
+            function assignGroup(id1,id2,group,k){
+                let i=nodes.findIndex(n=>n.id==id1);
+                    if(nodes[i]['radius']>0){
+                        nodes[i]['group']=group.toString();
+                    }else{
+                        links[k]['id']=-1;
+                    }
+                let j=nodes.findIndex(n=>n.id==id2);
+                if(nodes[j]['radius']>0){
+                    nodes[j]['group']=group.toString();
+                }else{
+                     links[k]['id']=-1;
+                }
+            }
 
-            node = node.data(nodes, d => d.id).join(enter => enter.append("circle"));
-            link = link.data(links, d => `${d.s}\t${d.t}`).join("line");
+            links.filter(function(d,i){return d.id!=-1});
+
+            groupIds = d3.set(nodes.filter(function(n){return n.radius>0})
+            .map(function (n) { return +n.group; })) // filter groupId's
+                .values()
+                .map(function (groupId) { 
+                    return { groupId: groupId,count: nodes.filter(function (n) { 
+                        return +n.group == groupId; }).length};})
+                .filter(function (group) { 
+                    return  group.count > 4; })
+                .map(function (group) { return group.groupId; });
+            
+            console.log(groupIds);
+
+            let n=[];
+            let l=[];
+
+            nodes.forEach(function(d,i){  // remove unnecessary nodes
+                if(groupIds.includes(d.group)){
+                    n.push(d);
+                }
+            })
+
+            links.forEach(function(d,i){ // remove unnecessary links
+                if(groupIds.includes(d.id.toString())){
+                    l.push(d);
+                }
+            })
+
+            //  console.log(n);
+            //  console.log(l);
+
+            const old = new Map(node.data().map(d => [d.id, d]));
+            n = n.map(d => Object.assign(old.get(d.id) || {}, d));
+            l = l.map(d => Object.assign({}, d));
+
+            simulation.nodes(n);
+            simulation.force("link").links(l);
+            simulation.alpha(1).restart();
+
+            node = node.data(n, d => d.id).join(enter => enter.append("circle"));
+            link = link.data(l, d => `${d.s}\t${d.t}`).join("line");
 
             node.attr("r", d => (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : null)
-                .attr("id", d => "n" + d.id)
-                .attr("opacity",0.5)
-                .attr("fill", d=> colors[d.cluster])
-                .append("title");
+            .attr("id", d => "n" + d.id)
+            .attr("opacity",0.5)
+            .attr("fill", d=> colors[d.cluster])
+            .append("title");
             node.exit().remove();
             node.select('title').text(function (d) {
                 let userid = d['userid'];
@@ -93,14 +137,11 @@ function _createSVG(width, height) {
                 let newfollowers = d['newfollowers'];
                 return 'userid ' + userid + '\n' + 'followers ' + followers + '\n' + 'unfollowers ' + unfollowers + '\n' + 'newfollowers ' + newfollowers;
             });
-            
-            for(let i=0;i<nodes.length;i++){  // making groups of nodes undefined on iteration
-                nodes[i]['group']=undefined;
-            }
            
             link.attr('stroke',function(d){  // making class of links undefined on iteration
                 d3.select("#n"+d.source.id).attr("class",undefined);
                 d3.select("#n"+d.target.id).attr("class",undefined);
+                return NaN;
             })
 
             link.attr('stroke', function (d) {
@@ -108,6 +149,7 @@ function _createSVG(width, height) {
                     let x= "m"+d.id;   // appending character 'm' to id 
                     d3.select("#n"+d.source.id).attr("class",x);
                     d3.select("#n"+d.target.id).attr("class",x);
+                    d3.select(this).attr("class",x);
                     if(d.arrow==false){
                         return 'rgb(250,2,229)';
                     }else{
@@ -131,38 +173,6 @@ function _createSVG(width, height) {
              .on('dbclick',()=>{
                 console.log("dbclick");
              });
-            
-            
-           
-            for(let i=0;i<nodes.length;i++){
-               if (d3.select("#n"+nodes[i]['id']).attr("class")!=undefined){
-                    let x = d3.select("#n"+nodes[i]['id']).attr("class");
-                    x=x.substring(1); // removing character 'm' from class
-                    nodes[i]['group']=x;
-               }
-            }
-
-            groupIds = d3.set(nodes.map(function (n) { return +n.group; }))
-                .values()
-                .map(function (groupId) { 
-                    return { groupId: groupId,count: nodes.filter(function (n) { 
-                        return +n.group == groupId; }).length};})
-                .filter(function (group) { 
-                    return  group.count > 4; })
-                .map(function (group) { return group.groupId; });
-            
-          // console.log(groupIds);
-            nodes.forEach(function(d,i){ // highlighting nodes in cluster
-                if (d3.select("#n"+d['id']).attr("class")!=undefined){
-                    let x= d3.select("#n"+d['id']).attr("class");
-                    if(x!=undefined){
-                        x=x.toString().substring(1);
-                        if(groupIds.includes(x)){
-                            d3.select("#n"+d['id']).attr("fill","lime")
-                        }
-                    }
-                 }
-            })
 
             paths = groups.selectAll('.path_placeholder')
                 .data(groupIds, function (d) { return +d; })
@@ -181,9 +191,11 @@ function _createSVG(width, height) {
             function polygonGenerator(groupId) {  // create polygon around cluster
                 var node_coords = node
                     .filter(function (d) { 
+                        
                         return d.group == groupId; })
                     .data()
                     .map(function (d) { return [d.x, d.y]; });
+                    
                 return d3.polygonHull(node_coords);
             };
 
@@ -191,8 +203,8 @@ function _createSVG(width, height) {
            simulation.on("tick",tick);
 
            function tick(){
-                new_tick();
-               updateGroups();
+                 new_tick();
+                updateGroups();
            }
            function new_tick(){
 
@@ -203,7 +215,7 @@ function _createSVG(width, height) {
                 .attr("y1", d => d.source.y)
                 .attr("x2", d => d.target.x)
                 .attr("y2", d => d.target.y)
-                .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);  
+              //  .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);  
             svg.append('defs').append('marker')
                 .attrs({
                     'id': 'arrowhead',
@@ -227,8 +239,10 @@ function _createSVG(width, height) {
                    path = paths.filter(function (d) {return d == groupId;})
                         .attr('transform', 'scale(1) translate(0,0)')
                         .attr('d', function (d) {
+                            
                                 polygon = polygonGenerator(d);
                                 centroid = d3.polygonCentroid(polygon);
+                                
                                return valueline(
                                 polygon.map(function (point) {
                                     return [point[0] - centroid[0], point[1] - centroid[1]];

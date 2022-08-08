@@ -38,7 +38,6 @@ function _createSVG(width, height) {
 
     return Object.assign(svg.node(), {
         update({ nodes, links }) {
-            
         curveTypes = ['curveBasisClosed', 'curveCardinalClosed', 'curveCatmullRomClosed', 'curveLinearClosed'];
         groupIds=[];
         d3.selectAll(".path_placeholder").remove();  // removing old polygons
@@ -67,6 +66,7 @@ function _createSVG(width, height) {
             })
 
             function assignGroup(id1,id2,group,k){
+                
                 let i=nodes.findIndex(n=>n.id==id1);
                     if(nodes[i]['radius']>0){
                         nodes[i]['group']=group.toString();
@@ -149,7 +149,6 @@ function _createSVG(width, height) {
                     let x= "m"+d.id;   // appending character 'm' to id 
                     d3.select("#n"+d.source.id).attr("class",x);
                     d3.select("#n"+d.target.id).attr("class",x);
-                    d3.select(this).attr("class",x);
                     if(d.arrow==false){
                         return 'rgb(250,2,229)';
                     }else{
@@ -158,6 +157,14 @@ function _createSVG(width, height) {
                 }else {
                     return 'none';
                 }
+            })
+
+            node.on("click",(event,d)=>{
+                let group = event.group;
+                let nf = nodes.filter(d=>d.group==group);
+                let lf = links.filter(d=>d.id==group);
+                let graph = { "nodes": nf, "links": lf }
+                svgRet.update(graph);
             })
 
             node.on("mouseenter", (event, d) => {
@@ -201,7 +208,7 @@ function _createSVG(width, height) {
 
            groupIds = groupIds.filter(function(e){return e!=0}); // remove groupId of hidden nodes;
            simulation.on("tick",tick);
-
+    
            function tick(){
                  new_tick();
                 updateGroups();

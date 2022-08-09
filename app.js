@@ -45,9 +45,16 @@ app.get('/d3',function(req,res){
 
 app.post("/getefd",(req,res)=>{
     let week = req.body.week;
-    let user = req.body.user;
-    var query = {"user":user};
-    collection_final_list.find({'week':week},{}).limit(500).toArray(function(e,r){
+    let user = req.body.users;
+
+    var query;
+    if(user.length>0){
+        query={"week":week,"user":{$in:user}},{};
+    }else{
+        query={"week":week},{};
+    }
+    
+    collection_final_list.find(query).limit(500).toArray(function(e,r){
         if(e) throw e;
         res.send(r);
     })

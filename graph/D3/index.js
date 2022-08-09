@@ -4,7 +4,8 @@ var colors = ['black', 'blue', 'green', 'red'];
 var color = d3.scaleOrdinal(d3.schemeCategory10);
 var scaleFactor = 1;
 var w=1;
-var svg,simulation,link,node,groupIds,groups,paths,valueline,graph,select,options,curveTypes,path;
+var svg,simulation,link,node,groupIds,groups,paths,valueline,graph,select,options,curveTypes,path,grp;
+var users=[];
 
 function _createSVG(width, height) {
 
@@ -38,11 +39,12 @@ function _createSVG(width, height) {
 
     return Object.assign(svg.node(), {
         update({ nodes, links }) {
-        curveTypes = ['curveBasisClosed', 'curveCardinalClosed', 'curveCatmullRomClosed', 'curveLinearClosed'];
+         
+        curveTypes = ['curveBasisClosed', 'curveCardinalClosed', 'curveCatmullRomClosed', 'curveLinearClosed']; // curve types
         groupIds=[];
         d3.selectAll(".path_placeholder").remove();  // removing old polygons
 
-        if(select==undefined){    // curve type drop down
+        if(select==undefined){    // select curve type drop down
             select = d3.select('#curveSettings')
                     .append('select')
                     .attr('class','select')
@@ -58,7 +60,7 @@ function _createSVG(width, height) {
                     .data(curveTypes).enter()
                     .append('option')
                     .text(function (d) { return d; });
-        }
+                    }
         
             
             links.forEach(function(d,i){
@@ -66,22 +68,13 @@ function _createSVG(width, height) {
             })
 
             function assignGroup(id1,id2,group,k){
-                
                 let i=nodes.findIndex(n=>n.id==id1);
-                    if(nodes[i]['radius']>0){
-                        nodes[i]['group']=group.toString();
-                    }else{
-                        links[k]['id']=-1;
-                    }
                 let j=nodes.findIndex(n=>n.id==id2);
-                if(nodes[j]['radius']>0){
-                    nodes[j]['group']=group.toString();
-                }else{
-                     links[k]['id']=-1;
-                }
+                nodes[i]['radius']>0 ? nodes[i]['group']=group.toString():links[k]['id']=-1;
+                nodes[j]['radius']>0 ? nodes[j]['group']=group.toString():links[k]['id']=-1;
             }
 
-            links.filter(function(d,i){return d.id!=-1});
+            links.filter(function(d,i){return d.id!=-1});  // remove unnecessary links
 
             groupIds = d3.set(nodes.filter(function(n){return n.radius>0})
             .map(function (n) { return +n.group; })) // filter groupId's
@@ -93,8 +86,6 @@ function _createSVG(width, height) {
                     return  group.count > 4; })
                 .map(function (group) { return group.groupId; });
             
-            console.log(groupIds);
-
             let n=[];
             let l=[];
 
@@ -110,8 +101,22 @@ function _createSVG(width, height) {
                 }
             })
 
-            //  console.log(n);
-            //  console.log(l);
+            if(grp!=undefined){
+                rec();
+            }
+
+            function rec(){
+                let nf = nodes.filter(d=>d.group==grp);
+                let lf = links.filter(d=>d.id==grp);
+                nodes.forEach(function(d,i){
+                    if(d.userid!=undefined){
+                        users.push(d.userid);
+                    }
+                })
+                n=nf;
+                l=lf;
+                grp=undefined;
+            }
 
             const old = new Map(node.data().map(d => [d.id, d]));
             n = n.map(d => Object.assign(old.get(d.id) || {}, d));
@@ -159,7 +164,10 @@ function _createSVG(width, height) {
                 }
             })
 
+            
+
             node.on("click",(event,d)=>{
+                grp = event.group;
                 let group = event.group;
                 let nf = nodes.filter(d=>d.group==group);
                 let lf = links.filter(d=>d.id==group);
@@ -183,13 +191,19 @@ function _createSVG(width, height) {
 
             paths = groups.selectAll('.path_placeholder')
                 .data(groupIds, function (d) { return +d; })
-                .enter()
-                .append('g')
-                .attr('class', 'path_placeholder')
-                .append('path')
-                .attr('stroke', function (d) { return color(d); })
-                .attr('fill', function (d) { return color(d); })
-                .attr("opacity", 0)
+                .join(
+                    enter=>enter.append('g')
+                        .attr('class', 'path_placeholder')
+                        .append('path')
+                        .attr('stroke', function (d) { return color(d); })
+                        .attr('fill', function (d) { return color(d); })
+                        .attr("opacity",1),
+                    update=>update
+                        .append('path')
+                        .attr('stroke', function (d) { return color(d); })
+                        .attr('fill', function (d) { return color(d); })
+                        .attr("opacity",1),
+                    exit=>exit.remove());
 
             paths.transition()
                 .duration(2000)
@@ -270,11 +284,12 @@ function _callApi(week) {
     $.ajax({
         method: "post",
         url: "/getefd",
-        data: JSON.stringify({ 'week': week }),
+        data: JSON.stringify({ 'week': week ,'users':users}),
         dataType: 'json',
         contentType: 'application/json',
         success: function (data) {
             finaldata = data;
+          
             loadagain(data, 1);
         }
     })
@@ -340,6 +355,8 @@ function loadagain(finaldata, week) {
         }
     }
     
+ 
+
     let my_dict=tedges;
     let dict_length = my_dict.length;
 
@@ -386,11 +403,11 @@ function loadagain(finaldata, week) {
     
     for(var i = 0 ; i < my_dict.length ; i++){
         if(ids[my_dict[i].source]==undefined){
-            console.log(my_dict[i].source);
+            // console.log(my_dict[i].source);
         }
         my_dict[i].id = ids[my_dict[i].source];
     }
-
+  
     graph = { "nodes": tnodes, "links": my_dict }
     svgRet.update(graph);
 }

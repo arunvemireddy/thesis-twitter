@@ -39,8 +39,13 @@
           oninput="scaleFactor = value; d3.select('#scaleFactorLabel').text(scaleFactor); updateGroups()"> -->
       </div>
     <div id="curveSettings">
+        <span class="btn">
         <p>Type of curve: <span id='curveLabel'>curveCatmullRomClosed</span></p>
+    </span>
     </div>
+    <!-- <div class="btn">
+
+    </div> -->
     <script type="module">
         import define from "./index.js";
         import { Runtime, Library, Inspector } from "./runtime.js";

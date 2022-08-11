@@ -4,7 +4,7 @@ var colors = ['black', 'blue', 'green', 'red'];
 var color = d3.scaleOrdinal(d3.schemeCategory10);
 var scaleFactor = 1;
 var w=1;
-var svg,simulation,link,node,groupIds,groups,paths,valueline,graph,select,options,curveTypes,path,grp;
+var svg,simulation,link,node,groupIds,groups,paths,valueline,graph,select,options,curveTypes,path,cluster,button,inputbx,slider ;
 var users=[];
 
 function _createSVG(width, height) {
@@ -39,7 +39,6 @@ function _createSVG(width, height) {
 
     return Object.assign(svg.node(), {
         update({ nodes, links }) {
-         
         curveTypes = ['curveBasisClosed', 'curveCardinalClosed', 'curveCatmullRomClosed', 'curveLinearClosed']; // curve types
         groupIds=[];
         d3.selectAll(".path_placeholder").remove();  // removing old polygons
@@ -60,6 +59,15 @@ function _createSVG(width, height) {
                     .data(curveTypes).enter()
                     .append('option')
                     .text(function (d) { return d; });
+
+            button = d3.select(".btn")
+                        .append("button")
+                        .text("Refresh")
+                        .on("click",function(){
+                            cluster=undefined;
+                            users=[];
+                            _callApi(parseInt(inputbx._groups[0][0].value));
+                        })
                     }
         
             
@@ -77,7 +85,7 @@ function _createSVG(width, height) {
             links.filter(function(d,i){return d.id!=-1});  // remove unnecessary links
 
             groupIds = d3.set(nodes.filter(function(n){return n.radius>0})
-            .map(function (n) { return +n.group; })) // filter groupId's
+                .map(function (n) { return +n.group; })) // filter groupId's
                 .values()
                 .map(function (groupId) { 
                     return { groupId: groupId,count: nodes.filter(function (n) { 
@@ -90,32 +98,26 @@ function _createSVG(width, height) {
             let l=[];
 
             nodes.forEach(function(d,i){  // remove unnecessary nodes
-                if(groupIds.includes(d.group)){
-                    n.push(d);
-                }
+                groupIds.includes(d.group)?n.push(d):NaN;
             })
 
             links.forEach(function(d,i){ // remove unnecessary links
-                if(groupIds.includes(d.id.toString())){
-                    l.push(d);
-                }
+                groupIds.includes(d.id.toString())?l.push(d):NaN;
             })
 
-            if(grp!=undefined){
-                rec();
-            }
+            cluster!=undefined?rec():NaN;
 
             function rec(){
-                let nf = nodes.filter(d=>d.group==grp);
-                let lf = links.filter(d=>d.id==grp);
+                let nf = nodes.filter(d=>d.group==cluster);
+                let lf = links.filter(d=>d.id==cluster);
                 nodes.forEach(function(d,i){
                     if(d.userid!=undefined){
-                        users.push(d.userid);
+                        users.push(d.userid);  // users in selected cluster
                     }
                 })
                 n=nf;
                 l=lf;
-                grp=undefined;
+                cluster=undefined;
             }
 
             const old = new Map(node.data().map(d => [d.id, d]));
@@ -167,7 +169,7 @@ function _createSVG(width, height) {
             
 
             node.on("click",(event,d)=>{
-                grp = event.group;
+                cluster = event.group;
                 let group = event.group;
                 let nf = nodes.filter(d=>d.group==group);
                 let lf = links.filter(d=>d.id==group);
@@ -212,11 +214,9 @@ function _createSVG(width, height) {
             function polygonGenerator(groupId) {  // create polygon around cluster
                 var node_coords = node
                     .filter(function (d) { 
-                        
                         return d.group == groupId; })
                     .data()
                     .map(function (d) { return [d.x, d.y]; });
-                    
                 return d3.polygonHull(node_coords);
             };
 
@@ -421,8 +421,8 @@ makeSlider("Week", "week", 1, 15, 1);  //week slider
 
 function makeSlider(name, attr, min, max, defaultValue) {
     d3.select(".sliders").append("label").text(name);
-    var inputbx = d3.select(".sliders").append("input").attr("value", defaultValue).attr('id', attr);
-    var slider = d3.select(".sliders").append("input");
+    inputbx = d3.select(".sliders").append("input").attr("value", defaultValue).attr('id', attr);
+    slider = d3.select(".sliders").append("input");
     slider
         .attr("type", "range")
         .attr("min", 0)

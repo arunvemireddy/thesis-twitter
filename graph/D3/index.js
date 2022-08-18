@@ -1,76 +1,103 @@
-var svgRet = _createSVG(1500, 1000)
 var radius = ['3', '5', '7', '9', '11'];
 var colors = ['black', 'blue', 'green', 'red'];
 var color = d3.scaleOrdinal(d3.schemeCategory10);
 var scaleFactor = 1;
 var w=1;
-var svg,simulation,link,node,groupIds,groups,paths,valueline,graph,select,options,curveTypes,path,cluster,button,inputbx,slider ;
+var select,options,curveTypes,cluster,button,inputbx,slider,checkbox;
 var users=[];
 
-function _createSVG(width, height) {
 
-    svg = d3.select('#svg').append("svg")  // create svg
+curveTypes = ['curveBasisClosed', 'curveCardinalClosed', 'curveCatmullRomClosed', 'curveLinearClosed']; // curve types
+
+checkbox = d3.select(".cb")
+            .append("label")
+            .text("compare")
+            .append("input")
+            .attr("type","checkbox")
+
+select = d3.select('#curveSettings')
+            .append('select')
+            .attr('class','select');
+
+
+
+options = d3.select('select')
+        .selectAll('option')
+        .data(curveTypes).enter()
+        .append('option')
+        .text(function (d) { return d; });
+
+button = d3.select(".btn")
+            .append("button")
+            .text("Refresh")
+            .on("click",function(){
+                cluster=undefined;
+                users=[];
+                _callApi(parseInt(inputbx._groups[0][0].value));
+            })
+
+var svgRet = _createSVG(1500, 1000)
+var count;
+
+function _createSVG(width, height) {
+    let title=d3.select("#svg")
+                .append("div")
+                .attr("class","title")
+     let text=  title.append("text")
+                .style("margin-left","50%")
+                .style("margin-right","50%")
+                .style("width","50%")
+                
+    if(count==undefined){
+        count=0;
+    }else{
+        count=count+1;
+    }
+    count=count.toString();
+    var polygon,centroid;
+
+    var svg = d3.select('#svg').append("svg")  // create svg
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [-width / 2, -height / 2, width, height]);
 
     
-    svg.call(d3.zoom().on("zoom", function () {   // svg zoom
-        d3.select('svg').attr("transform", d3.event.transform)}));
+    // svg.call(d3.zoom().on("zoom", function () {   // svg zoom
+    //     d3.select('svg').attr("transform", d3.event.transform)}));
 
     
-    simulation = d3.forceSimulation()  // create simulation
+    var simulation = d3.forceSimulation()  // create simulation
         .force("charge", d3.forceManyBody().strength(-60))
         .force("link", d3.forceLink().id(d => d.id).distance(30))
         .force("x", d3.forceX())
         .force("y", d3.forceY())
 
-    valueline = d3.line()
-                    .x(function(d) { return d[0]; })
-                    .y(function(d) { return d[1]; })
-                    .curve(d3.curveCatmullRomClosed);
+    var groups = svg.append('g').attr('class', 'groups'); // create groups
 
-    
-    groups = svg.append('g').attr('class', 'groups'); // create groups
-
-    node = svg.append("g").selectAll("circle") // create nodes
+    var node = svg.append("g").selectAll("circle") // create nodes
      
-    link = svg.append("g").selectAll("line"); // create links
+    var link = svg.append("g").selectAll("line"); // create links
+
+    var valueline = d3.line()
+            .x(function(d) { return d[0]; })
+            .y(function(d) { return d[1]; })
+            .curve(d3.curveCatmullRomClosed);
 
     return Object.assign(svg.node(), {
         update({ nodes, links }) {
-        curveTypes = ['curveBasisClosed', 'curveCardinalClosed', 'curveCatmullRomClosed', 'curveLinearClosed']; // curve types
-        groupIds=[];
-        d3.selectAll(".path_placeholder").remove();  // removing old polygons
+        var groupIds=[];
+        let week=d3.select("#week").attr("value");
+        text.text("week"+week).style("font-size","x-large")
+        checkbox._groups[0][0]["checked"]=false;
+       d3.selectAll("#path"+count).remove();  // removing old polygons
 
-        if(select==undefined){    // select curve type drop down
-            select = d3.select('#curveSettings')
-                    .append('select')
-                    .attr('class','select')
-                    .on('change', function() {
-                    var val = d3.select('select').property('value');
-                    d3.select('#curveLabel').text(val);
-                    valueline.curve(d3[val]);
-                    updateGroups();
-                    });
+        select.on('change', function() {
+                let val = d3.select('select').property('value');
+                d3.select('#curveLabel').text(val);
+                valueline.curve(d3[val]);
+                updateGroups();
+                });
 
-            options = d3.select('select')
-                    .selectAll('option')
-                    .data(curveTypes).enter()
-                    .append('option')
-                    .text(function (d) { return d; });
-
-            button = d3.select(".btn")
-                        .append("button")
-                        .text("Refresh")
-                        .on("click",function(){
-                            cluster=undefined;
-                            users=[];
-                            _callApi(parseInt(inputbx._groups[0][0].value));
-                        })
-                    }
-        
-            
             links.forEach(function(d,i){
                 assignGroup(d.source,d.target,d.id,i);
             })
@@ -128,7 +155,7 @@ function _createSVG(width, height) {
             simulation.force("link").links(l);
             simulation.alpha(1).restart();
 
-            node = node.data(n, d => d.id).join(enter => enter.append("circle"));
+            node = node.data(n, d => d.id).join("circle")
             link = link.data(l, d => `${d.s}\t${d.t}`).join("line");
 
             node.attr("r", d => (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : null)
@@ -191,11 +218,12 @@ function _createSVG(width, height) {
                 console.log("dbclick");
              });
 
-            paths = groups.selectAll('.path_placeholder')
+            var paths = groups.selectAll('.path_placeholder')
                 .data(groupIds, function (d) { return +d; })
                 .join(
                     enter=>enter.append('g')
                         .attr('class', 'path_placeholder')
+                        .attr("id","path"+count)
                         .append('path')
                         .attr('stroke', function (d) { return color(d); })
                         .attr('fill', function (d) { return color(d); })
@@ -205,7 +233,8 @@ function _createSVG(width, height) {
                         .attr('stroke', function (d) { return color(d); })
                         .attr('fill', function (d) { return color(d); })
                         .attr("opacity",1),
-                    exit=>exit.remove());
+                     exit=>exit.remove()
+                    );
 
             paths.transition()
                 .duration(2000)
@@ -236,7 +265,7 @@ function _createSVG(width, height) {
                 .attr("y1", d => d.source.y)
                 .attr("x2", d => d.target.x)
                 .attr("y2", d => d.target.y)
-              //  .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);  
+              .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);  
             svg.append('defs').append('marker')
                 .attrs({
                     'id': 'arrowhead',
@@ -255,9 +284,8 @@ function _createSVG(width, height) {
            }
            
             function updateGroups() {
-                let polygon,centroid;
                 groupIds.forEach(function (groupId) {
-                   path = paths.filter(function (d) {return d == groupId;})
+                   var path = paths.filter(function (d) {return d == groupId;})
                         .attr('transform', 'scale(1) translate(0,0)')
                         .attr('d', function (d) {
                             
@@ -270,7 +298,7 @@ function _createSVG(width, height) {
                                 })
                             );
                         });
-                   d3.select(path.node().parentNode).attr('transform', 'translate(' + centroid[0] + ',' + (centroid[1]) + ') scale(' + scaleFactor + ')');
+                  d3.select(path.node().parentNode).attr('transform', 'translate(' + centroid[0] + ',' + (centroid[1]) + ') scale(' + scaleFactor + ')');
                 })
             }
         }
@@ -408,8 +436,19 @@ function loadagain(finaldata, week) {
         my_dict[i].id = ids[my_dict[i].source];
     }
   
-    graph = { "nodes": tnodes, "links": my_dict }
-    svgRet.update(graph);
+    
+    let graph = { "nodes": tnodes, "links": my_dict}
+    console.log(checkbox._groups[0][0]["checked"]);
+
+    
+    if(checkbox._groups[0][0]["checked"]){
+        svgRet = _createSVG(1500, 1000)
+        svgRet.update(graph);
+    }else{
+        svgRet.update(graph);
+    }
+  
+    
 }
 
 export default function define(runtime, observer) {

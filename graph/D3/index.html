@@ -24,6 +24,9 @@
         width: 100%;
         margin: 5px 0;
     }
+    #svg{
+        display: flex;
+    }
     path {
   fill-opacity: .1;
   stroke-opacity: 1;
@@ -32,7 +35,7 @@
 </head>
 
 <body>
-    <div class="sliders" id="slide"></div>
+   
     <div id="scaleFactorSettings">
         <!-- <p>Scale of the groups: <span id='scaleFactorLabel'>1.2</span></p> -->
         <!-- <input type="range" min="1" max="3" value="1.2" step=".1" 
@@ -58,7 +61,11 @@
 
 
     </script>
-<div id="svg"></div>
+      <div class="sliders" id="slide"></div>
+<div id="svg">
+    <!-- create svg in this div -->
+  
+</div>
 </body>
 
 </html>

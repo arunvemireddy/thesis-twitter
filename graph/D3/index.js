@@ -43,10 +43,12 @@ function _createSVG(width, height) {
     let title=d3.select("#svg")
                 .append("div")
                 .attr("class","title")
-     let text=  title.append("text")
+    let text=  title.append("text")
                 .style("margin-left","50%")
                 .style("margin-right","50%")
                 .style("width","50%")
+
+    // makeSlider("Week", "week", 1, 15, 1); 
                 
     if(count==undefined){
         count=0;
@@ -57,11 +59,14 @@ function _createSVG(width, height) {
     var polygon,centroid;
 
     var svg = d3.select('#svg').append("svg")  // create svg
-        .attr("width", width)
-        .attr("height", height)
-        .attr("viewBox", [-width / 2, -height / 2, width, height]);
+                .attr("width", width)
+                .attr("height", height)
+                .attr("viewBox", [-width / 2, -height / 2, width, height]);
 
-    
+    //  d3.select("#svg").attr("class","sliders").append("label").text("week");
+    // inputbx = d3.select("#svg").attr("class","sliders").append("input");
+    // slider = d3.select("#svg").append("input");
+
     // svg.call(d3.zoom().on("zoom", function () {   // svg zoom
     //     d3.select('svg').attr("transform", d3.event.transform)}));
 
@@ -239,6 +244,7 @@ function _createSVG(width, height) {
             paths.transition()
                 .duration(2000)
                 .attr("opacity", 1);
+
 
             function polygonGenerator(groupId) {  // create polygon around cluster
                 var node_coords = node
@@ -459,6 +465,7 @@ export default function define(runtime, observer) {
 makeSlider("Week", "week", 1, 15, 1);  //week slider
 
 function makeSlider(name, attr, min, max, defaultValue) {
+   
     d3.select(".sliders").append("label").text(name);
     inputbx = d3.select(".sliders").append("input").attr("value", defaultValue).attr('id', attr);
     slider = d3.select(".sliders").append("input");

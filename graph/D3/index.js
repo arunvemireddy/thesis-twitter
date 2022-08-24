@@ -52,9 +52,19 @@ function _createSVG(width, height) {
                 // .style("margin-right","50%")
                 .style("width","50%")
 
-    let cb = d3.select('#svg')
+    let cb = d3.select('#svg')  //week checkbox 
                 .append("div")
                 .attr("class","cb");
+
+    let tooltip = d3.select('#svg')  //tool tip
+                    .append("div")
+                    .attr("class","tooltip")
+                    .text("users");
+    
+    let tooltipText = tooltip.append("span")
+                        .attr("class","tooltiptext")
+                        // .text("arun");
+    // tooltipText.text("arun");
 
     if(count==undefined){
         count=0;
@@ -112,7 +122,7 @@ function _createSVG(width, height) {
 
     return Object.assign(svg.node(), {
         update({ nodes, links }) {
-        var groupIds=[];
+        var groupIds=[];  // make groupId's empty 
         let week=d3.select("#week").attr("value");
         text.text("week"+week).style("font-size","x-large")
         checkbox._groups[0][0]["checked"]=false;
@@ -131,17 +141,17 @@ function _createSVG(width, height) {
                 assignGroup(d.source,d.target,d.id,i);
             })
 
-            function assignGroup(id1,id2,group,k){
+            function assignGroup(id1,id2,group,k){  // assigning group to nodes
                 let i=nodes.findIndex(n=>n.id==id1);
                 let j=nodes.findIndex(n=>n.id==id2);
                 nodes[i]['radius']>0 ? nodes[i]['group']=group.toString():links[k]['id']=-1;
                 nodes[j]['radius']>0 ? nodes[j]['group']=group.toString():links[k]['id']=-1;
             }
 
-            links.filter(function(d,i){return d.id!=-1});  // remove unnecessary links
+            links.filter(function(d,i){return d.id!=-1});  // removing unnecessary links
 
             groupIds = d3.set(nodes.filter(function(n){return n.radius>0})
-                .map(function (n) { return +n.group; })) // filter groupId's
+                .map(function (n) { return +n.group; })) // filtering groupId's repeated more than 4 times
                 .values()
                 .map(function (groupId) { 
                     return { groupId: groupId,count: nodes.filter(function (n) { 
@@ -163,7 +173,7 @@ function _createSVG(width, height) {
 
             cluster!=undefined?rec():NaN;
 
-            function rec(){
+            function rec(){   // flitering nodes that belongs to specific cluster
                 let nf = nodes.filter(d=>d.group==cluster);
                 let lf = links.filter(d=>d.id==cluster);
                 nodes.forEach(function(d,i){
@@ -175,6 +185,9 @@ function _createSVG(width, height) {
                 l=lf;
                 cluster=undefined;
             }
+
+            tooltipText.text(n.length);
+            d3.selectAll("tooltipText").text(users);
 
             const old = new Map(node.data().map(d => [d.id, d]));
             n = n.map(d => Object.assign(old.get(d.id) || {}, d));
@@ -314,7 +327,8 @@ function _createSVG(width, height) {
                 .attr('fill', 'black')
                 .style('stroke', 'black');
            }
-           
+
+          
             function updateGroups() {
                 groupIds.forEach(function (groupId) {
                    var path = paths.filter(function (d) {return d == groupId;})
@@ -416,7 +430,7 @@ function loadagain(finaldata, week) {
     }
     
  
-
+    
     let my_dict=tedges;
     let dict_length = my_dict.length;
 
@@ -470,19 +484,22 @@ function loadagain(finaldata, week) {
     
     let graph = { "nodes": tnodes, "links": my_dict}
     
-    if(checkbox._groups[0][0]["checked"]){
+    if(checkbox._groups[0][0]["checked"]){  // to create new svg
         svgRet = new _createSVG(1500, 1000);
-        obj.push({"i":parseInt(count),"j":svgRet});
-        ob.add(parseInt(count));
-        dynamic=parseInt(count);
+        let c = parseInt(count);
+        obj.push({"i":c,"j":svgRet}); // saving svg in an object
+        ob.add(c);  // saving count in list
+        dynamic=c;
         svgRet.update(graph);
     }else{
         console.log(obj,ob);
-        ob.forEach(function(d,m){
+        ob.forEach(function(d,m){   // update existing svg
             obj.forEach(function(p,n){
                 if(p['i']==d){
+                    console.log(p['j'])
                     dynamic=d;
-                    p['j'].update(graph);
+                    let svg = p['j'];
+                    svg.update(graph);
                 }
             })
         })
@@ -494,7 +511,7 @@ export default function define(runtime, observer) {
 }
 
 
- makeSlider("Week", "week", 1, 15, 1);  //week slider
+ makeSlider("Week", "week", 1, 15, 1);  //change week slider
 
 function makeSlider(name, attr, min, max, defaultValue) {
    

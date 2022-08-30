@@ -3,32 +3,38 @@ var colors = ['black', 'blue', 'green', 'red'];
 var color = d3.scaleOrdinal(d3.schemeCategory10);
 var scaleFactor = 1.4;
 var w=1;
-var select,options,curveTypes,cluster,button,inputbx,slider,checkbox;
+var options,cluster,inputbx,slider;
 var users=[];
 var obj=[]; // to store svg objects
 var ob=new Set();  // to store checked svg's number
 var dynamic=0;
 
-curveTypes = ['curveBasisClosed', 'curveCardinalClosed', 'curveCatmullRomClosed', 'curveLinearClosed']; // curve types
+var title = d3.select("#title")
+            .style("width","100%")
+            .style("height","5%")
+            .append("p")
+            .text("Title")
+            .style("text-align","center")
 
-checkbox = d3.select(".cb")
-            .append("label")
-            .text("compare")
-            .append("input")
-            .attr("type","checkbox")
+var menu = d3.select("#menu")
+            .style("display","inline-block")
+            .style("width","15%")
+            .style("height","100%")
+            .append("group")
+            .attr("id","me")
 
-select = d3.select('#curveSettings')
-            .append('select')
-            .attr('class','select');
+var compare = menu
+                .append("label")
+                .text("comapre")
+                .append("input")
+                .attr("type","checkbox")
+                .style("margin-bottom","15px")
 
-options = d3.select('select')
-        .selectAll('option')
-        .data(curveTypes).enter()
-        .append('option')
-        .text(function (d) { return d; });
+menu.append("br")
 
-button = d3.select(".btn")
+var refresh = d3.select("#me")
             .append("button")
+            .style("margin-bottom","15px")
             .text("Refresh")
             .on("click",function(){
                 cluster=undefined;
@@ -36,33 +42,59 @@ button = d3.select(".btn")
                 _callApi(parseInt(inputbx._groups[0][0].value));
             })
 
+menu.append("br")
+
+var curveTypes = ['curveBasisClosed', 'curveCardinalClosed', 'curveCatmullRomClosed', 'curveLinearClosed']; // curve types
+
+var select_label=d3.select('#me')
+                    .append("span")
+                    .style("display","flex")
+
+select_label.append("text")
+            .text("Type Of Curve")
+            .style("display","block")
+            .style("margin-bottom","10px");
+            
+var select = select_label.append('select')
+            .attr('class','select')
+
+var option = select.selectAll('option')
+            .data(curveTypes).enter()
+            .append('option')
+            .attr("value", function (d) { return d; })
+            .text(function (d) { return d; })
+
 var count;
-var svgRet = new _createSVG(1500, 1000);
+var svgRet = new _createSVG(1500, 1000, "g1");
 obj.push({"i":0,"j":svgRet});
 ob.add(0);
 console.log(ob);
 // _callApi(w);
 
-function _createSVG(width, height) {
+function _createSVG(width, height, id) {
     let title=d3.select("#svg")
                 .append("div")
                 .attr("class","title")
     let text=  title.append("text")
                 // .style("margin-left","50%")
                 // .style("margin-right","50%")
-                .style("width","50%")
+                // .style("width","50%")
 
     let cb = d3.select('#svg')  //week checkbox 
                 .append("div")
                 .attr("class","cb");
 
+
     let tooltip = d3.select('#svg')  //tool tip
                     .append("div")
                     .attr("class","tooltip")
-                    .text("users");
+                    .text("users")
+                    // .style("height","auto")
+                    // .style("position","relative");
     
     let tooltipText = tooltip.append("span")
                         .attr("class","tooltiptext")
+                        // .attr("position","absolute")
                         // .text("arun");
     // tooltipText.text("arun");
 
@@ -96,11 +128,26 @@ function _createSVG(width, height) {
     
     var polygon,centroid;
 
+    
+
     var svg = d3.select('#svg').append("svg")  // create svg
                 .attr("width", width)
                 .attr("height", height)
                 .attr("id",svgId)
-                .attr("viewBox", [-width / 2, -height / 2, width, height]);
+                .attr("z-index",-1)
+                .attr("position","relative")
+                .attr("viewBox", [-width / 2, -height / 2, width, height])
+                .append("g")
+                .attr("id", "g" + svgId);
+
+    let zoom = d3.zoom()
+                .on('zoom', handleZoom);
+            
+    function handleZoom(e) {
+            d3.select("#" + "g" + svgId).attr('transform', d3.event.transform);
+    }
+
+    d3.select('#' + svgId).call(zoom);
 
     
     var simulation = d3.forceSimulation()  // create simulation
@@ -109,6 +156,7 @@ function _createSVG(width, height) {
         .force("x", d3.forceX())
         .force("y", d3.forceY())
 
+                
     var groups = svg.append('g').attr('class', 'groups'); // create groups
 
     var node = svg.append("g").selectAll("circle").attr("class","nodes"); // create nodes
@@ -125,13 +173,14 @@ function _createSVG(width, height) {
         var groupIds=[];  // make groupId's empty 
         let week=d3.select("#week").attr("value");
         text.text("week"+week).style("font-size","x-large")
-        checkbox._groups[0][0]["checked"]=false;
+        compare._groups[0][0]["checked"]=false;
 
         dynamic=dynamic.toString();
         d3.selectAll("#path"+dynamic).remove();  // removing old polygons
       
         select.on('change', function() {
-                let val = d3.select('select').property('value');
+                console.log("arun");
+                let val = d3.select(this).property('value');
                 d3.select('#curveLabel').text(val);
                 valueline.curve(d3[val]);
                 updateGroups();
@@ -484,7 +533,7 @@ function loadagain(finaldata, week) {
     
     let graph = { "nodes": tnodes, "links": my_dict}
     
-    if(checkbox._groups[0][0]["checked"]){  // to create new svg
+    if(compare._groups[0][0]["checked"]){  // to create new svg
         svgRet = new _createSVG(1500, 1000);
         let c = parseInt(count);
         obj.push({"i":c,"j":svgRet}); // saving svg in an object
@@ -520,6 +569,7 @@ function makeSlider(name, attr, min, max, defaultValue) {
     slider = d3.select(".sliders").append("input");
     slider
         .attr("type", "range")
+        .attr("z-index",1)
         .attr("min", 0)
         .attr("max", 1000)
         .attr("value", (defaultValue - min) / (max - min) * 1000)

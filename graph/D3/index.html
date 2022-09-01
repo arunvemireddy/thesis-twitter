@@ -8,6 +8,13 @@
     <script src="https://d3js.org/d3.v5.min.js"></script>
     <script src="https://d3js.org/d3-selection-multi.v1.min.js"></script>
     <style>
+
+    html{
+        height: 100%;
+    }
+    body{
+        height: 100%;
+    }
          .sliders {
         margin: auto;
         width: 20%;
@@ -43,7 +50,12 @@
 
 <body>
     <div id="title"></div>
-    <div id="menu"></div>
+    <div id="vis" style="height :100%">
+        <div id="menu"></div>
+        <div id="visdiv"></div>
+    </div>
+    
+
     <div class="sliders" id="slide" style="z-index: 1;position: relative;"></div>
    
     <div id="scaleFactorSettings">
@@ -62,16 +74,21 @@
     <!-- <div class="btn">
 
     </div> -->
-    <script type="module">
+    <!-- <scrip src="index.js"></scrip> -->
+   
+    <script src="process.js"></script>
+    
+   
+    </script>
+
+      <script type="module">
         import define from "./index.js";
         import { Runtime, Library, Inspector } from "./runtime.js";
-
         const runtime = new Runtime();
         const main = runtime.module(define, Inspector.into(document.body));
-
-
     </script>
-      
+     <script type="module" src="network.js"></script>
+     
 <div id="svg">
     <!-- create svg in this div -->
    

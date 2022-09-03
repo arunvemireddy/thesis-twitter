@@ -3,13 +3,13 @@ var w=1;
 var inputbx=1,slider;
 var title;
 var menu;
-var refresh;
-export var title,menu,compare,refresh,curveTypes,select_label,select,option,visdiv,count,svgRet,temp,svgId,obj=[],cluster,users=[];
+// var refresh;
+export var title,menu,compare,curveTypes,select_label,select,option,visdiv,count,svgRet,temp,svgId,obj=[],cluster,users=[],refresh;
 export var radius = ['3', '5', '7', '9', '11'],color = d3.scaleOrdinal(d3.schemeCategory10),polygon,centroid,scaleFactor = 1.4,colors = ["black","blue","green","red"];
 
 export function setCount(value) {
     count = value;
-    console.log(count);
+    // console.log(count);
 }
 
 export function setSvgId(value) {
@@ -39,6 +39,9 @@ export function setCentroid(value){
 export function setUsers(value){
     users=value;
 }
+export function setCluster(value){
+    cluster = value;
+}
 
 
 
@@ -49,7 +52,8 @@ title = d3.select("#title")
         .style("height","5%")
         .style("background","rgb(242, 240, 233)")
         .append("p")
-        .text("Title")
+        .text("Social Media Visualization")
+        .style("font","bold")
         .style("text-align","center")
 
 menu = d3.select("#menu")
@@ -74,11 +78,11 @@ refresh = d3.select("#me")
         .append("button")
         .style("margin-bottom","15px")
         .text("Refresh")
-        .on("click",function(){
-            cluster=undefined;
-            users=[];
-            _callApi(parseInt(inputbx._groups[0][0].value));
-        })
+        // .on("click",function(){
+        //     cluster=undefined;
+        //     users=[];
+        //     _callApi(parseInt(inputbx._groups[0][0].value));
+        // })
 
 // menu.append("br")
 

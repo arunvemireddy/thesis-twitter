@@ -1,10 +1,15 @@
-import { count,temp,setCount,svgId,setSvgId,setTemp,visdiv,obj,setObj,compare,setCompare,select,cluster,users,radius,color,polygon,centroid,setPolygon,setCentroid,scaleFactor,colors,setUsers} from "./index.js";
-console.log(count);
+import { count,temp,setCount,svgId,setSvgId,setTemp,visdiv,obj,setObj,compare,setCompare,select,cluster,setCluster,users,radius,color,polygon,centroid,setPolygon,setCentroid,scaleFactor,colors,setUsers,refresh} from "./index.js";
+
 let svgRet = new _createSVG(1500, 1000);
 setObj(0,svgRet); 
 setTemp(0);
-
-export default function _createSVG(width, height) {
+var t;
+refresh.on("click",function(){
+    setCluster(undefined);
+    setUsers([]);
+    _callApi(parseInt(inputbx._groups[0][0].value));
+})
+function _createSVG(width, height) {
     if(count==undefined){
         setCount(0);
     }else{
@@ -22,7 +27,7 @@ export default function _createSVG(width, height) {
 
     let weekno = d3.select("#d"+svgId)
                 .append("text")
-                // .attr("id","week"+svgId)
+                .attr("id","week"+svgId)
                 .text("week"+1)
                 .attr("value","week"+1)
                 .style("font-size","x-large");
@@ -37,10 +42,15 @@ export default function _createSVG(width, height) {
                     .attr("min",1)
                     .attr("max",15)
                     .attr("value",0)
+                    .on("mouseover",function(){
+                        // console.log(slider.attr("id"));
+                        // console.log(d3.select(this).attr('id').replace('weeksvg',''));
+                        // setTemp(d3.select(this).attr('id').replace('weeksvg',''));
+                    })
                     .on("change",function(){
-                        setTemp(d3.select(this)._groups[0][0]['id'].replace('weeksvg',''));
-                        let val = +slider.property("value");
-                        console.log(val);
+                        setTemp(d3.select(this).attr('id').replace('weeksvg',''));
+                        let val = +d3.select(this).property("value");
+                        // console.log(val);
                         weekno.text("week"+val)
                         _callApi(val);
                         // weekno.append("br");
@@ -53,16 +63,25 @@ export default function _createSVG(width, height) {
                 .attr("width", "80%")
                 .attr("height", "80%")
                 .attr("id",svgId)
+                // .on("mouseover",()=>{
+                //     let e = svg.attr(("id").replace("svg",''));
+                //     console.log(e);
+                //     if(temp!=e){
+                //         setTemp(e);
+                //     }
+                // })
                 .attr("z-index",-1)
                 .attr("position","relative")
                 .attr("viewBox", [-width / 2, -height / 2, width, height])
                 .append("g")
                 .attr("id", "g" + svgId)
                 .on("mouseover",()=>{
-                    let e = svg.attr('id').replace('gsvg','');
-                    console.log(e);
+                    let e = svg.attr(("id").replace('gsvg',''));
+                    console.log(e)
                     setTemp(e);
-                });
+                })
+              
+                
 
     
 
@@ -102,11 +121,11 @@ export default function _createSVG(width, height) {
         // .attr("id","s"+svgId)
 
                 
-    var groups = svg.append('g').attr('class', 'groups'); // create groups
+    var groups = d3.select("#svg"+temp).append('g').attr('class', 'groups'); // create groups
 
-    var node = svg.append("g").selectAll("circle").attr("class","nodes"); // create nodes
+    var node = d3.select("#svg"+temp).append("g").selectAll("circle").attr("class","nodes"); // create nodes
      
-    var link = svg.append("g").selectAll("line").attr("class","links"); // create links
+    var link = d3.select("#svg"+temp).append("g").selectAll("line").attr("class","links"); // create links
 
     var valueline = d3.line()
             .x(function(d) { return d[0]; })
@@ -119,7 +138,8 @@ export default function _createSVG(width, height) {
         update({ nodes, links }) {
         var groupIds=[];  // make groupId's empty 
         setCompare(false);
-        console.log("#pathsvg"+temp);
+
+        // console.log("#pathsvg"+temp);
         d3.selectAll("#pathsvg"+temp).remove();  // removing old polygons
       
         select.on('change', function() {
@@ -230,12 +250,20 @@ export default function _createSVG(width, height) {
             
 
             node.on("click",(event,d)=>{
-                cluster = event.group;
+                setCluster(cluster);
+                // console.log(d3.select("#svg"+temp).attr("id"))
+                console.log(temp);
                 let group = event.group;
                 let nf = nodes.filter(d=>d.group==group);
                 let lf = links.filter(d=>d.id==group);
                 let graph = { "nodes": nf, "links": lf }
-                svgRet.update(graph);
+                obj.forEach(function(m,n){
+                    if(m['i']==temp){
+                        m['j'].update(graph);
+                    }
+                });
+                // svgRet.update(graph);
+
             })
 
             node.on("mouseenter", (event, d) => {
@@ -254,20 +282,20 @@ export default function _createSVG(width, height) {
 
             
             var paths = groups.selectAll('.path_placeholder')
-                .attr("id","path"+svgId)
+                .attr("id","pathsvg"+temp)
                 .data(groupIds, function (d) { 
-                    console.log("path"+svgId)
+                    // console.log("pathsvg"+temp)
                     return +d; })
                 .join(
                     enter=>enter.append('g')
                         .attr('class', 'path_placeholder')
-                        .attr("id","path"+svgId)
+                        .attr("id","pathsvg"+temp)
                         .append('path')
                         .attr('stroke', function (d) { return color(d); })
                         .attr('fill', function (d) { return color(d); })
                         .attr("opacity",1),
                     update=>update
-                        .attr("id","path"+svgId) 
+                        .attr("id","pathsvg"+temp) 
                         .append('path')
                         .attr('stroke', function (d) { return color(d); })
                         .attr('fill', function (d) { return color(d); })
@@ -355,7 +383,6 @@ export function _callApi(w,users){
 }
 
 function de(data){
-    console.log(data+"arun");
     let graph = data;
     if(compare._groups[0][0]["checked"]){ 
         let svg = new _createSVG(1500, 1000);

@@ -44,9 +44,11 @@ app.get('/d3',function(req,res){
 })
 
 app.post("/getefd",(req,res)=>{
+    
     let week = req.body.week;
     let user = req.body.users;
-
+    // console.log(user);
+    
     var query;
     if(user.length>0){
         query={"week":week,"user":{$in:user}},{};

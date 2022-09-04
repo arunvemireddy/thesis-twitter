@@ -1,14 +1,15 @@
-import { count,temp,setCount,svgId,setSvgId,setTemp,visdiv,obj,setObj,select,cluster,setCluster,users,radius,color,polygon,centroid,setPolygon,setCentroid,scaleFactor,colors,setUsers,refresh,add,sub} from "./index.js";
+import { count,temp,setCount,svgId,setSvgId,setTemp,visdiv,obj,setObj,select,cluster,setCluster,radius,color,polygon,centroid,setPolygon,setCentroid,scaleFactor,colors,refresh,add,sub} from "./index.js";
 
 let svgRet = new _createSVG(1500, 1000);
 setObj(0,svgRet); 
 setTemp(0);
 var t;
+var users=[];
 
 
 refresh.on("click",function(){
     setCluster(undefined);
-    setUsers([]);
+    users=[];
     _callApi(parseInt(inputbx._groups[0][0].value));
 })
 
@@ -69,7 +70,7 @@ function _createSVG(width, height) {
                         let val = +d3.select(this).property("value");
                         // console.log(val);
                         weekno.text("week"+val)
-                        _callApi(val);
+                        _callApi(val,users);
                         // weekno.append("br");
                     })
 
@@ -203,7 +204,7 @@ function _createSVG(width, height) {
                 })
                 n=nf;
                 l=lf;
-                cluster=undefined;
+                
             }
 
             tooltipText.text(n.length);
@@ -259,9 +260,9 @@ function _createSVG(width, height) {
             
 
             node.on("click",(event,d)=>{
-                setCluster(cluster);
                 setTemp(node.attr("value"));
                 let group = event.group;
+                setCluster(group);
                 let nf = nodes.filter(d=>d.group==group);
                 let lf = links.filter(d=>d.id==group);
                 let graph = { "nodes": nf, "links": lf }
@@ -359,6 +360,7 @@ function _createSVG(width, height) {
 
           
             function updateGroups() {
+                // console.log(groupIds);
                 groupIds.forEach(function (groupId) {
                    var path = paths.filter(function (d) {return d == groupId;})
                         .attr('transform', 'scale(1) translate(0,0)')
@@ -379,7 +381,7 @@ function _createSVG(width, height) {
 }
 
 
-_callApi(1,setUsers([]));
+_callApi(1,users);
 
 export function _callApi(w,users){
     let x=_call(w,users);  

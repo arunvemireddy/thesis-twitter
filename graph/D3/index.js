@@ -4,7 +4,7 @@ var inputbx=1,slider;
 var title;
 var menu;
 // var refresh;
-export var title,menu,curveTypes,select_label,select,option,visdiv,count,svgRet,temp,svgId,obj=[],cluster,users=[],refresh,add,sub;
+export var title,menu,curveTypes,select_label,select,option,visdiv,count,svgRet,temp,svgId,obj=[],cluster,refresh,add,sub;
 export var radius = ['3', '5', '7', '9', '11'],color = d3.scaleOrdinal(d3.schemeCategory10),polygon,centroid,scaleFactor = 1.4,colors = ["black","blue","green","red"];
 
 export function setCount(value) {
@@ -36,9 +36,13 @@ export function setCentroid(value){
     centroid = value;
 }
 
-export function setUsers(value){
-    users=value;
-}
+// export function setUsers(value){
+//     if(value!=undefined){
+//     users.push(value);
+//     }else{
+//         users=[];
+//     }
+// }
 export function setCluster(value){
     cluster = value;
 }

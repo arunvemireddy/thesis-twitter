@@ -4,7 +4,7 @@ var inputbx=1,slider;
 var title;
 var menu;
 // var refresh;
-export var title,menu,compare,curveTypes,select_label,select,option,visdiv,count,svgRet,temp,svgId,obj=[],cluster,users=[],refresh;
+export var title,menu,curveTypes,select_label,select,option,visdiv,count,svgRet,temp,svgId,obj=[],cluster,users=[],refresh,add,sub;
 export var radius = ['3', '5', '7', '9', '11'],color = d3.scaleOrdinal(d3.schemeCategory10),polygon,centroid,scaleFactor = 1.4,colors = ["black","blue","green","red"];
 
 export function setCount(value) {
@@ -24,9 +24,9 @@ export function setObj(val1,val2){
     obj.push({"i":val1,"j":val2});
 }
 
-export function setCompare(value){
-    compare._groups[0][0]["checked"]=value;
-}
+// export function setCompare(value){
+//     compare._groups[0][0]["checked"]=value;
+// }
 
 export function setPolygon(value){
     polygon = value;
@@ -65,12 +65,20 @@ menu = d3.select("#menu")
         .append("group")
         .attr("id","me")
 
-compare = menu
-        .append("label")
-        .text("comapre")
-        .append("input")
-        .attr("type","checkbox")
-        .style("margin-bottom","15px")
+add = menu.append("button")
+        .attr("class","add")
+        .text("+");
+
+sub = menu.append("button")
+        .attr("class","sub")
+        .text("-");
+
+// compare = menu
+//         .append("label")
+//         .text("comapre")
+//         .append("input")
+//         .attr("type","checkbox")
+//         .style("margin-bottom","15px")
 
 menu.append("br")
 

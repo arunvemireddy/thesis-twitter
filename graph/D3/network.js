@@ -1,14 +1,31 @@
-import { count,temp,setCount,svgId,setSvgId,setTemp,visdiv,obj,setObj,compare,setCompare,select,cluster,setCluster,users,radius,color,polygon,centroid,setPolygon,setCentroid,scaleFactor,colors,setUsers,refresh} from "./index.js";
+import { count,temp,setCount,svgId,setSvgId,setTemp,visdiv,obj,setObj,select,cluster,setCluster,users,radius,color,polygon,centroid,setPolygon,setCentroid,scaleFactor,colors,setUsers,refresh,add,sub} from "./index.js";
 
 let svgRet = new _createSVG(1500, 1000);
 setObj(0,svgRet); 
 setTemp(0);
 var t;
+
+
 refresh.on("click",function(){
     setCluster(undefined);
     setUsers([]);
     _callApi(parseInt(inputbx._groups[0][0].value));
 })
+
+add.on("click",()=>{
+    let x=_call(1,[]);  
+    x.then(function (data) {
+        let svg = new _createSVG(1500, 1000);
+        obj.push({"i":count,"j":svg}); 
+        svg.update(Gr);
+      });
+})
+
+sub.on("click",()=>{
+    setCount(count-1);
+    d3.select("#dsvg"+count).remove();
+})
+
 function _createSVG(width, height) {
     if(count==undefined){
         setCount(0);
@@ -128,7 +145,7 @@ function _createSVG(width, height) {
     return Object.assign(svg.node(), {
         update({ nodes, links }) {
         var groupIds=[];  // make groupId's empty 
-        setCompare(false);
+        // setCompare(false);
 
         // console.log("#pathsvg"+temp);
         d3.selectAll("#pathsvg"+temp).remove();  // removing old polygons
@@ -373,15 +390,9 @@ export function _callApi(w,users){
 
 function de(data){
     let graph = data;
-    if(compare._groups[0][0]["checked"]){ 
-        let svg = new _createSVG(1500, 1000);
-        obj.push({"i":count,"j":svg}); 
-        svg.update(graph);
-    }else{
         obj.forEach(function(m,n){
             if(m['i']==temp){
                 m['j'].update(graph);
             }
         });
-    }
 }

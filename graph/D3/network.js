@@ -63,27 +63,18 @@ function _createSVG(width, height) {
                 .attr("width", "80%")
                 .attr("height", "80%")
                 .attr("id",svgId)
-                // .on("mouseover",()=>{
-                //     let e = svg.attr(("id").replace("svg",''));
-                //     console.log(e);
-                //     if(temp!=e){
-                //         setTemp(e);
-                //     }
-                // })
+                .on("mouseenter",()=>{
+                    let e = svg.attr("id").replace("gsvg",'');
+                    // console.log(e);
+                    if(temp!=e){
+                        setTemp(e);
+                    }
+                })
                 .attr("z-index",-1)
                 .attr("position","relative")
                 .attr("viewBox", [-width / 2, -height / 2, width, height])
                 .append("g")
-                .attr("id", "g" + svgId)
-                .on("mouseover",()=>{
-                    let e = svg.attr(("id").replace('gsvg',''));
-                    console.log(e)
-                    setTemp(e);
-                })
-              
-                
-
-    
+                .attr("id", "g" + svgId);
 
     let cb = d3.select('#svg')  //week checkbox 
                 .append("div")
@@ -106,7 +97,7 @@ function _createSVG(width, height) {
     let zoom = d3.zoom()
                 .on('zoom', handleZoom);
             
-    function handleZoom(e) {
+    function handleZoom() {
             d3.select("#" + "gsvg" + temp).attr('transform', d3.event.transform);
     }
 
@@ -121,11 +112,11 @@ function _createSVG(width, height) {
         // .attr("id","s"+svgId)
 
                 
-    var groups = d3.select("#svg"+temp).append('g').attr('class', 'groups'); // create groups
+    var groups = svg.append('g').attr('class', 'groups'); // create groups
 
-    var node = d3.select("#svg"+temp).append("g").selectAll("circle").attr("class","nodes"); // create nodes
+    var node = svg.append("g").selectAll("circle").attr("class","nodes"); // create nodes
      
-    var link = d3.select("#svg"+temp).append("g").selectAll("line").attr("class","links"); // create links
+    var link = svg.append("g").selectAll("line").attr("class","links"); // create links
 
     var valueline = d3.line()
             .x(function(d) { return d[0]; })
@@ -214,6 +205,7 @@ function _createSVG(width, height) {
 
             node.attr("r", d => (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : null)
             .attr("id", d => "n" + d.id)
+            .attr("value",temp)
             .attr("opacity",0.5)
             .attr("fill", d=> colors[d.cluster])
             .append("title");
@@ -251,8 +243,7 @@ function _createSVG(width, height) {
 
             node.on("click",(event,d)=>{
                 setCluster(cluster);
-                // console.log(d3.select("#svg"+temp).attr("id"))
-                console.log(temp);
+                setTemp(node.attr("value"));
                 let group = event.group;
                 let nf = nodes.filter(d=>d.group==group);
                 let lf = links.filter(d=>d.id==group);
@@ -262,8 +253,6 @@ function _createSVG(width, height) {
                         m['j'].update(graph);
                     }
                 });
-                // svgRet.update(graph);
-
             })
 
             node.on("mouseenter", (event, d) => {

@@ -10,11 +10,26 @@ var users=[];
 refresh.on("click",function(){
     setCluster(undefined);
     users=[];
-    _callApi(parseInt(inputbx._groups[0][0].value));
+    let x=_call(1,users);  
+    x.then(function (data) {
+        re(Gr);
+      });
 })
 
+function re(Gr){
+    
+    obj.forEach(function(m,n){
+        // console.log(d3.select("#weeksvg"+n).attr("value"));
+        console.log(d3.select("#weeksvg"+n));
+        d3.select("#weekssvg"+n).text("week"+1);
+        d3.select("#weeksvg"+n).attr("value",0);
+        console.log("test");
+        m['j'].update(Gr);
+    });
+}
+
 add.on("click",()=>{
-    let x=_call(1,[]);  
+    let x=_call(1,users);  
     x.then(function (data) {
         let svg = new _createSVG(1500, 1000);
         obj.push({"i":count,"j":svg}); 
@@ -46,7 +61,7 @@ function _createSVG(width, height) {
 
     let weekno = d3.select("#d"+svgId)
                 .append("text")
-                .attr("id","week"+svgId)
+                .attr("id","weeks"+svgId)
                 .text("week"+1)
                 .attr("value","week"+1)
                 .style("font-size","x-large");

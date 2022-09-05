@@ -90,6 +90,7 @@ refresh = d3.select("#me")
         .append("button")
         .style("margin-bottom","15px")
         .text("Refresh")
+        // .attr("disabled",true)
         // .on("click",function(){
         //     cluster=undefined;
         //     users=[];

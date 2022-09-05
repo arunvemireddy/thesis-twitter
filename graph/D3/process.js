@@ -1,7 +1,7 @@
 var Gr;
 
 async function _call(week,users) { 
-    console.log(users);
+    // console.log(users);
     await $.ajax({
         method: "post",
         url: "/getefd",

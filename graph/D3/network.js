@@ -1,4 +1,4 @@
-import { count,temp,setCount,svgId,setSvgId,setTemp,visdiv,obj,setObj,select,cluster,setCluster,radius,color,polygon,centroid,setPolygon,setCentroid,scaleFactor,colors,refresh,add,sub} from "./index.js";
+import { count,temp,setCount,svgId,setSvgId,setTemp,visdiv,obj,setObj,select,cluster,setCluster,radius,color,scaleFactor,colors,refresh,add,sub} from "./index.js";
 
 let svgRet = new _createSVG(1500, 1000);
 setObj(0,svgRet); 
@@ -28,6 +28,7 @@ sub.on("click",()=>{
 })
 
 function _createSVG(width, height) {
+    var polygon,centroid;
     if(count==undefined){
         setCount(0);
     }else{
@@ -171,6 +172,10 @@ function _createSVG(width, height) {
 
             links.filter(function(d,i){return d.id!=-1});  // removing unnecessary links
 
+            // if(cluster!=undefined){
+
+            // }
+
             groupIds = d3.set(nodes.filter(function(n){return n.radius>0})
                 .map(function (n) { return +n.group; })) // filtering groupId's repeated more than 4 times
                 .values()
@@ -181,8 +186,10 @@ function _createSVG(width, height) {
                     return  group.count > 4; })
                 .map(function (group) { return group.groupId; });
             
-            let n=[];
-            let l=[];
+            var n=[];
+            var l=[];
+
+            // console.log(groupIds);
 
             nodes.forEach(function(d,i){  // remove unnecessary nodes
                 groupIds.includes(d.group)?n.push(d):NaN;
@@ -204,7 +211,7 @@ function _createSVG(width, height) {
                 })
                 n=nf;
                 l=lf;
-                
+               setCluster(undefined); 
             }
 
             tooltipText.text(n.length);
@@ -316,15 +323,17 @@ function _createSVG(width, height) {
 
 
             function polygonGenerator(groupId) {  // create polygon around cluster
+                // console.log(groupId);
                 var node_coords = node
                     .filter(function (d) { 
+                        // console.log(d.group);
                         return d.group == groupId; })
                     .data()
                     .map(function (d) { return [d.x, d.y]; });
                 return d3.polygonHull(node_coords);
             };
 
-           groupIds = groupIds.filter(function(e){return e!=0}); // remove groupId of hidden nodes;
+        //    groupIds = groupIds.filter(function(e){return e!=0}); // remove groupId of hidden nodes;
            simulation.on("tick",tick);
     
            function tick(){
@@ -340,7 +349,8 @@ function _createSVG(width, height) {
                 .attr("y1", d => d.source.y)
                 .attr("x2", d => d.target.x)
                 .attr("y2", d => d.target.y)
-              .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);  
+                .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);  
+
             svg.append('defs').append('marker')
                 .attrs({
                     'id': 'arrowhead',
@@ -360,13 +370,16 @@ function _createSVG(width, height) {
 
           
             function updateGroups() {
+                // let polygon,centroid;
                 // console.log(groupIds);
                 groupIds.forEach(function (groupId) {
                    var path = paths.filter(function (d) {return d == groupId;})
                         .attr('transform', 'scale(1) translate(0,0)')
                         .attr('d', function (d) {
-                                setPolygon(polygonGenerator(d));
-                                setCentroid(d3.polygonCentroid(polygon));
+                                // console.log(d);
+                                polygon=polygonGenerator(d);
+                                // console.log(polygon);
+                                centroid = d3.polygonCentroid(polygon);
                                return valueline(
                                 polygon.map(function (point) {
                                     return [point[0] - centroid[0], point[1] - centroid[1]];

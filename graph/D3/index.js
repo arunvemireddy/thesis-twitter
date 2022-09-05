@@ -5,7 +5,7 @@ var title;
 var menu;
 // var refresh;
 export var title,menu,curveTypes,select_label,select,option,visdiv,count,svgRet,temp,svgId,obj=[],cluster,refresh,add,sub;
-export var radius = ['3', '5', '7', '9', '11'],color = d3.scaleOrdinal(d3.schemeCategory10),polygon,centroid,scaleFactor = 1.4,colors = ["black","blue","green","red"];
+export var radius = ['3', '5', '7', '9', '11'],color = d3.scaleOrdinal(d3.schemeCategory10),scaleFactor = 1.4,colors = ["black","blue","green","red"];
 
 export function setCount(value) {
     count = value;

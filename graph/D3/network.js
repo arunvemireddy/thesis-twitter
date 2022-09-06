@@ -79,20 +79,21 @@ function _createSVG(width, height) {
     let close = d3.select("#d"+svgId)   // close svg button
                     .append("button")
                     .attr("class","close")
-                    .attr("id","close"+temp)
+                    .attr("id","close"+svgId)
                     .text("X")
                     .style("float","right")
-
-    d3.select("#close"+temp).on("click",function(){
-        obj.forEach(function(m,n){
-            if(m['i']==temp){
-                obj.splice(n, 1);
-            }
-        })
-        setCount(count-1);
-        d3.select("#dsvg"+temp).remove();
-        console.log(obj);
-    })
+                    .on("click",function(){
+                        let temp = d3.select(this).attr('id').replace('closesvg','');
+                        setTemp(temp);
+                        obj.forEach(function(m,n){
+                            if(m['i']==temp){
+                                obj.splice(n, 1);
+                            }
+                        })
+                        setCount(count-1);
+                        d3.selectAll("#dsvg"+temp).remove();
+                        console.log(obj);
+                    })
 
     var svg = d3.select("#d"+svgId)
                 .append("svg")  // create svg

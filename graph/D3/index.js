@@ -73,9 +73,9 @@ add = menu.append("button")
         .attr("class","add")
         .text("+");
 
-sub = menu.append("button")
-        .attr("class","sub")
-        .text("-");
+// sub = menu.append("button")
+//         .attr("class","sub")
+//         .text("-");
 
 // compare = menu
 //         .append("label")

@@ -16,15 +16,13 @@ refresh.on("click",function(){
       });
 })
 
-function re(Gr){
-    
+function re(data){
+    console.log(data);
     obj.forEach(function(m,n){
-        // console.log(d3.select("#weeksvg"+n).attr("value"));
-        console.log(d3.select("#weeksvg"+n));
         d3.select("#weekssvg"+n).text("week"+1);
         d3.select("#weeksvg"+n).attr("value",0);
-        console.log("test");
-        m['j'].update(Gr);
+        setTemp(n);
+        m['j'].update(data);
     });
 }
 
@@ -32,43 +30,30 @@ add.on("click",()=>{
     let x=_call(1,users);  
     x.then(function (data) {
         let svg = new _createSVG(1500, 1000);
-        obj.push({"i":count,"j":svg}); 
+        obj.push({"i":count,"j":svg})
         svg.update(Gr);
       });
 })
 
-sub.on("click",()=>{
-    setCount(count-1);
-    d3.select("#dsvg"+count).remove();
-})
+// sub.on("click",()=>{
+//     setCount(count-1);
+//     d3.select("#dsvg"+count).remove();
+// })
 
 function _createSVG(width, height) {
-    var polygon,centroid;
-    if(count==undefined){
-        setCount(0);
-    }else{
-        setCount(count+1);
-    }
+    count==undefined?setCount(0):setCount(count+1);
+    setSvgId("svg"+count);  // set svgId
+    setTemp(count);  // set temp value
 
-    setSvgId("svg"+count);
-    setTemp(count); 
-         
+    var polygon,centroid;
+       
     let div = visdiv.append("div")
                 .attr("id","d"+svgId)
                 .style("width","100%")
                 .style("height","100%")
                 .style("background","azure");
 
-    let weekno = d3.select("#d"+svgId)
-                .append("text")
-                .attr("id","weeks"+svgId)
-                .text("week"+1)
-                .attr("value","week"+1)
-                .style("font-size","x-large");
-
-    weekno.append("br");
-
-    let slider = d3.select("#d"+svgId)
+    let slider = d3.select("#d"+svgId)  // week slider
                     .append("input")
                     .style("display","block")
                     .attr("id","week"+svgId)
@@ -76,19 +61,38 @@ function _createSVG(width, height) {
                     .attr("min",1)
                     .attr("max",15)
                     .attr("value",0)
-                    .on("mouseover",function(){
-                        // console.log(slider.attr("id"));
-                        // console.log(d3.select(this).attr('id').replace('weeksvg',''));
-                        // setTemp(d3.select(this).attr('id').replace('weeksvg',''));
-                    })
+                    .style("float","left")
                     .on("change",function(){
                         setTemp(d3.select(this).attr('id').replace('weeksvg',''));
                         let val = +d3.select(this).property("value");
-                        // console.log(val);
-                        weekno.text("week"+val)
+                        weekno.text("week"+val);
                         _callApi(val,users);
-                        // weekno.append("br");
                     })
+
+    let weekno = d3.select("#d"+svgId)  // week text
+                    .append("text")
+                    .attr("id","weeks"+svgId)
+                    .text("week"+1)
+                    .attr("value","week"+1)
+                    .style("font-size","x-large");
+
+    let close = d3.select("#d"+svgId)   // close svg button
+                    .append("button")
+                    .attr("class","close")
+                    .attr("id","close"+temp)
+                    .text("X")
+                    .style("float","right")
+
+    d3.select("#close"+temp).on("click",function(){
+        obj.forEach(function(m,n){
+            if(m['i']==temp){
+                obj.splice(n, 1);
+            }
+        })
+        setCount(count-1);
+        d3.select("#dsvg"+temp).remove();
+        console.log(obj);
+    })
 
     var svg = d3.select("#d"+svgId)
                 .append("svg")  // create svg
@@ -110,6 +114,8 @@ function _createSVG(width, height) {
                 .append("g")
                 .attr("id", "g" + svgId);
 
+    
+
     let cb = d3.select('#svg')  //week checkbox 
                 .append("div")
                 .attr("class","cb");
@@ -128,43 +134,35 @@ function _createSVG(width, height) {
                         .text("arun");
     tooltipText.text("arun");
 
-    let zoom = d3.zoom()
-                .on('zoom', handleZoom);
+    let zoom = d3.zoom().on('zoom', handleZoom);
             
     function handleZoom() {
-            d3.select("#" + "gsvg" + temp).attr('transform', d3.event.transform);
+        d3.select("#" + "gsvg" + temp).attr('transform', d3.event.transform);
     }
 
     d3.select('#svg' + temp).call(zoom);
 
-    
     var simulation = d3.forceSimulation()  // create simulation
         .force("charge", d3.forceManyBody().strength(-60))
         .force("link", d3.forceLink().id(d => d.id).distance(30))
         .force("x", d3.forceX())
         .force("y", d3.forceY())
-        // .attr("id","s"+svgId)
-
                 
     var groups = svg.append('g').attr('class', 'groups'); // create groups
-
+    
     var node = svg.append("g").selectAll("circle").attr("class","nodes"); // create nodes
      
     var link = svg.append("g").selectAll("line").attr("class","links"); // create links
 
-    var valueline = d3.line()
+    var valueline = d3.line()    // curve type
             .x(function(d) { return d[0]; })
             .y(function(d) { return d[1]; })
             .curve(d3.curveCatmullRomClosed);
 
     
-
-    return Object.assign(svg.node(), {
+    return Object.assign(d3.select("#gsvg"+temp).node(), {
         update({ nodes, links }) {
         var groupIds=[];  // make groupId's empty 
-        // setCompare(false);
-
-        // console.log("#pathsvg"+temp);
         d3.selectAll("#pathsvg"+temp).remove();  // removing old polygons
       
         select.on('change', function() {
@@ -187,10 +185,6 @@ function _createSVG(width, height) {
 
             links.filter(function(d,i){return d.id!=-1});  // removing unnecessary links
 
-            // if(cluster!=undefined){
-
-            // }
-
             groupIds = d3.set(nodes.filter(function(n){return n.radius>0})
                 .map(function (n) { return +n.group; })) // filtering groupId's repeated more than 4 times
                 .values()
@@ -204,14 +198,12 @@ function _createSVG(width, height) {
             var n=[];
             var l=[];
 
-            // console.log(groupIds);
-
             nodes.forEach(function(d,i){  // remove unnecessary nodes
-                groupIds.includes(d.group)?n.push(d):NaN;
+                groupIds.includes(d.group)?n.push(d):NaN;   // new nodes
             })
 
             links.forEach(function(d,i){ // remove unnecessary links
-                groupIds.includes(d.id.toString())?l.push(d):NaN;
+                groupIds.includes(d.id.toString())?l.push(d):NaN; // new links
             })
 
             cluster!=undefined?rec():NaN;
@@ -240,7 +232,7 @@ function _createSVG(width, height) {
             simulation.force("link").links(l);
             simulation.alpha(1).restart();
 
-            node = node.data(n, d => d.id).join("circle")
+            node = node.data(n, d => d.id).join("circle");
             link = link.data(l, d => `${d.s}\t${d.t}`).join("line");
 
             node.attr("r", d => (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : null)

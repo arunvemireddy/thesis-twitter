@@ -48,21 +48,26 @@ export function setCluster(value){
 }
 
 
-
-
+var w = window.innerWidth;
+var h = window.innerHeight;
+// console.log(h);
+// console.log(w);
+var nw = (w*15)/100;
 
 title = d3.select("#title")
+        .style("display","flex")
         .style("width","100%")
         .style("height","5%")
         .style("background","rgb(242, 240, 233)")
         .append("p")
+        .style("margin","auto")
         .text("Social Media Visualization")
         .style("font","bold")
-        .style("text-align","center")
+        .style("color","darkblue")
+        
 
 menu = d3.select("#menu")
         .style("background","rgb(218, 237, 245)")
-        // .style("display","inline-block")
         .style("float","left")
         .style("width","15%")
         .style("height","100%")
@@ -71,18 +76,10 @@ menu = d3.select("#menu")
 
 add = menu.append("button")
         .attr("class","add")
-        .text("+");
-
-// sub = menu.append("button")
-//         .attr("class","sub")
-//         .text("-");
-
-// compare = menu
-//         .append("label")
-//         .text("comapre")
-//         .append("input")
-//         .attr("type","checkbox")
-//         .style("margin-bottom","15px")
+        .text("+")
+        .style("padding","7px 30px")
+        .style("display","flex")
+        .style("margin","auto")
 
 menu.append("br")
 
@@ -90,6 +87,8 @@ refresh = d3.select("#me")
         .append("button")
         .style("margin-bottom","15px")
         .text("Refresh")
+        .style("display","flex")
+        .style("margin","auto")
         // .attr("disabled",true)
         // .on("click",function(){
         //     cluster=undefined;
@@ -102,13 +101,12 @@ refresh = d3.select("#me")
 curveTypes = ['curveBasisClosed', 'curveCardinalClosed', 'curveCatmullRomClosed', 'curveLinearClosed']; // curve types
 
 select_label=d3.select('#me')
-                    .append("span")
-                    .style("display","flex")
+                .append("span")
+                .style("display","flex")
+                .style("margin","auto")
 
 select_label.append("text")
             .text("Type Of Curve")
-            .style("display","block")
-            .style("margin-bottom","10px");
 
 select = select_label.append('select')
             .attr('class','select')

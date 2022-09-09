@@ -1,5 +1,8 @@
 import { count,temp,setCount,svgId,setSvgId,setTemp,visdiv,obj,setObj,select,cluster,setCluster,radius,color,scaleFactor,colors,refresh,add,sub} from "./index.js";
 
+var innerWidth = window.innerWidth;
+var innerHeight = window.innerHeight;
+
 let svgRet = new _createSVG(1500, 1000);
 setObj(0,svgRet); 
 setTemp(0);
@@ -29,7 +32,7 @@ function re(data){
 add.on("click",()=>{
     let x=_call(1,users);  
     x.then(function (data) {
-        let svg = new _createSVG(1500, 1000);
+        let svg = new _createSVG(innerWidth, innerHeight);
         obj.push({"i":count,"j":svg})
         svg.update(Gr);
       });
@@ -47,11 +50,13 @@ function _createSVG(width, height) {
 
     var polygon,centroid;
        
-    let div = visdiv.append("div")
+    let div = visdiv
+                .append("div")
                 .attr("id","d"+svgId)
-                .style("width","100%")
-                .style("height","100%")
-                .style("background","azure");
+                .style("width",width)
+                .style("height",height)
+                .style("background","azure")
+                
 
     let slider = d3.select("#d"+svgId)  // week slider
                     .append("input")
@@ -90,17 +95,16 @@ function _createSVG(width, height) {
                                 obj.splice(n, 1);
                             }
                         })
-                        setCount(count-1);
-                        d3.selectAll("#dsvg"+temp).remove();
+                        d3.select("#dsvg"+temp).remove();
                         console.log(obj);
                     })
 
-    var svg = d3.select("#d"+svgId)
-                .append("svg")  // create svg
+    var svg = d3.select("#d"+svgId)  // create svg
+                .append("svg")  
                 .style("display","block")
                 .style("margin","auto")
-                .attr("width", "80%")
-                .attr("height", "80%")
+                .attr("width", "100%")
+                .attr("height", "100%")
                 .attr("id",svgId)
                 .on("mouseenter",()=>{
                     let e = svg.attr("id").replace("gsvg",'');
@@ -163,7 +167,14 @@ function _createSVG(width, height) {
     
     return Object.assign(d3.select("#gsvg"+temp).node(), {
         update({ nodes, links }) {
+        // console.log(temp);
+        // console.log(nodes.length,links.length);
+        var nod,lin=[];
+        nod = nodes;
+        lin = links;
         var groupIds=[];  // make groupId's empty 
+        var n=[];
+        var l=[];
         d3.selectAll("#pathsvg"+temp).remove();  // removing old polygons
       
         select.on('change', function() {
@@ -173,46 +184,51 @@ function _createSVG(width, height) {
                 updateGroups();
                 });
 
-            links.forEach(function(d,i){
+                lin.forEach(function(d,i){
                 assignGroup(d.source,d.target,d.id,i);
-            })
+                })
 
-            function assignGroup(id1,id2,group,k){  // assigning group to nodes
-                let i=nodes.findIndex(n=>n.id==id1);
-                let j=nodes.findIndex(n=>n.id==id2);
-                nodes[i]['radius']>0 ? nodes[i]['group']=group.toString():links[k]['id']=-1;
-                nodes[j]['radius']>0 ? nodes[j]['group']=group.toString():links[k]['id']=-1;
+            function assignGroup(id1,id2,group,k){  // assigning group to nodes using links
+                let i=nod.findIndex(n=>n.id==id1);
+                let j=nod.findIndex(n=>n.id==id2);
+                if(nod[i]['radius']>0 && nod[j]['radius']>0){
+                    if(nod[i]['radius']>0){
+                        nod[i]['group']=group.toString();
+                    }
+                    if(nod[j]['radius']>0){
+                        nod[j]['group']=group.toString();
+                    }
+                }else{
+                    lin[k]['id']=-1;
+                }
             }
 
-            links.filter(function(d,i){return d.id!=-1});  // removing unnecessary links
+            lin.filter(function(d,i){return d.id!=-1});  // removing unnecessary links
 
-            groupIds = d3.set(nodes.filter(function(n){return n.radius>0})
+            groupIds = d3.set(nod.filter(function(n){return n.radius>0})
                 .map(function (n) { return +n.group; })) // filtering groupId's repeated more than 4 times
                 .values()
                 .map(function (groupId) { 
-                    return { groupId: groupId,count: nodes.filter(function (n) { 
+                    return { groupId: groupId,count: nod.filter(function (n) { 
                         return +n.group == groupId; }).length};})
                 .filter(function (group) { 
                     return  group.count > 4; })
                 .map(function (group) { return group.groupId; });
-            
-            var n=[];
-            var l=[];
 
-            nodes.forEach(function(d,i){  // remove unnecessary nodes
+            nod.forEach(function(d,i){  // remove unnecessary nodes
                 groupIds.includes(d.group)?n.push(d):NaN;   // new nodes
             })
 
-            links.forEach(function(d,i){ // remove unnecessary links
+            lin.forEach(function(d,i){ // remove unnecessary links
                 groupIds.includes(d.id.toString())?l.push(d):NaN; // new links
             })
 
             cluster!=undefined?rec():NaN;
 
             function rec(){   // flitering nodes that belongs to specific cluster
-                let nf = nodes.filter(d=>d.group==cluster);
-                let lf = links.filter(d=>d.id==cluster);
-                nodes.forEach(function(d,i){
+                let nf = n.filter(d=>d.group==cluster);
+                let lf = l.filter(d=>d.id==cluster);
+                nod.forEach(function(d,i){
                     if(d.userid!=undefined){
                         users.push(d.userid);  // users in selected cluster
                     }
@@ -224,6 +240,9 @@ function _createSVG(width, height) {
 
             tooltipText.text(n.length);
             d3.selectAll("tooltipText").text(users);
+
+            nod=[];
+            lin=[];
 
             const old = new Map(node.data().map(d => [d.id, d]));
             n = n.map(d => Object.assign(old.get(d.id) || {}, d));
@@ -278,8 +297,8 @@ function _createSVG(width, height) {
                 setTemp(node.attr("value"));
                 let group = event.group;
                 setCluster(group);
-                let nf = nodes.filter(d=>d.group==group);
-                let lf = links.filter(d=>d.id==group);
+                let nf = nod.filter(d=>d.group==group);
+                let lf = lin.filter(d=>d.id==group);
                 let graph = { "nodes": nf, "links": lf }
                 obj.forEach(function(m,n){
                     if(m['i']==temp){

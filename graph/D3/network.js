@@ -23,8 +23,9 @@ function re(data){
     console.log(data);
     obj.forEach(function(m,n){
         d3.select("#weekssvg"+n).text("week"+1);
-        d3.select("#weeksvg"+n).attr("value",0);
         setTemp(n);
+        d3.selectAll(".slider").attr("value","1");
+        d3.selectAll(".slider").attr("defaultValue","1");
         m['j'].update(data);
     });
 }
@@ -63,13 +64,18 @@ function _createSVG(width, height) {
                     .style("display","block")
                     .attr("id","week"+svgId)
                     .attr("type","range")
+                    .attr("class","slider")
                     .attr("min",1)
                     .attr("max",15)
-                    .attr("value",0)
+                    .attr("defaultValue",1)
+                    .attr("value",1)
+                    .attr("step",1)
                     .style("float","left")
                     .on("change",function(){
                         setTemp(d3.select(this).attr('id').replace('weeksvg',''));
                         let val = +d3.select(this).property("value");
+                        d3.select(this).attr("value",val);
+                        d3.select(this).attr("defaultValue",val);
                         weekno.text("week"+val);
                         _callApi(val,users);
                     })
@@ -169,9 +175,8 @@ function _createSVG(width, height) {
         update({ nodes, links }) {
         // console.log(temp);
         // console.log(nodes.length,links.length);
-        var nod,lin=[];
-        nod = nodes;
-        lin = links;
+   
+  
         var groupIds=[];  // make groupId's empty 
         var n=[];
         var l=[];
@@ -184,42 +189,42 @@ function _createSVG(width, height) {
                 updateGroups();
                 });
 
-                lin.forEach(function(d,i){
+                links.forEach(function(d,i){
                 assignGroup(d.source,d.target,d.id,i);
                 })
 
             function assignGroup(id1,id2,group,k){  // assigning group to nodes using links
-                let i=nod.findIndex(n=>n.id==id1);
-                let j=nod.findIndex(n=>n.id==id2);
-                if(nod[i]['radius']>0 && nod[j]['radius']>0){
-                    if(nod[i]['radius']>0){
-                        nod[i]['group']=group.toString();
+                let i=nodes.findIndex(n=>n.id==id1);
+                let j=nodes.findIndex(n=>n.id==id2);
+                if(nodes[i]['radius']>0 && nodes[j]['radius']>0){
+                    if(nodes[i]['radius']>0){
+                        nodes[i]['group']=group.toString();
                     }
-                    if(nod[j]['radius']>0){
-                        nod[j]['group']=group.toString();
+                    if(nodes[j]['radius']>0){
+                        nodes[j]['group']=group.toString();
                     }
                 }else{
-                    lin[k]['id']=-1;
+                    links[k]['id']=-1;
                 }
             }
 
-            lin.filter(function(d,i){return d.id!=-1});  // removing unnecessary links
+            links.filter(function(d,i){return d.id!=-1});  // removing unnecessary links
 
-            groupIds = d3.set(nod.filter(function(n){return n.radius>0})
+            groupIds = d3.set(nodes.filter(function(n){return n.radius>0})
                 .map(function (n) { return +n.group; })) // filtering groupId's repeated more than 4 times
                 .values()
                 .map(function (groupId) { 
-                    return { groupId: groupId,count: nod.filter(function (n) { 
+                    return { groupId: groupId,count: nodes.filter(function (n) { 
                         return +n.group == groupId; }).length};})
                 .filter(function (group) { 
                     return  group.count > 4; })
                 .map(function (group) { return group.groupId; });
 
-            nod.forEach(function(d,i){  // remove unnecessary nodes
+                nodes.forEach(function(d,i){  // remove unnecessary nodes
                 groupIds.includes(d.group)?n.push(d):NaN;   // new nodes
             })
 
-            lin.forEach(function(d,i){ // remove unnecessary links
+            links.forEach(function(d,i){ // remove unnecessary links
                 groupIds.includes(d.id.toString())?l.push(d):NaN; // new links
             })
 
@@ -228,7 +233,7 @@ function _createSVG(width, height) {
             function rec(){   // flitering nodes that belongs to specific cluster
                 let nf = n.filter(d=>d.group==cluster);
                 let lf = l.filter(d=>d.id==cluster);
-                nod.forEach(function(d,i){
+                nodes.forEach(function(d,i){
                     if(d.userid!=undefined){
                         users.push(d.userid);  // users in selected cluster
                     }
@@ -240,9 +245,6 @@ function _createSVG(width, height) {
 
             tooltipText.text(n.length);
             d3.selectAll("tooltipText").text(users);
-
-            nod=[];
-            lin=[];
 
             const old = new Map(node.data().map(d => [d.id, d]));
             n = n.map(d => Object.assign(old.get(d.id) || {}, d));
@@ -297,8 +299,8 @@ function _createSVG(width, height) {
                 setTemp(node.attr("value"));
                 let group = event.group;
                 setCluster(group);
-                let nf = nod.filter(d=>d.group==group);
-                let lf = lin.filter(d=>d.id==group);
+                let nf = nodes.filter(d=>d.group==group);
+                let lf = links.filter(d=>d.id==group);
                 let graph = { "nodes": nf, "links": lf }
                 obj.forEach(function(m,n){
                     if(m['i']==temp){

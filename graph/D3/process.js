@@ -1,15 +1,15 @@
 var Gr;
 
-async function _call(week,users) { 
+async function _call(week, users) {
     // console.log(users);
     await $.ajax({
         method: "post",
         url: "/getefd",
-        data: JSON.stringify({ 'week': week ,'users':users}),
+        data: JSON.stringify({ 'week': week, 'users': users }),
         dataType: 'json',
         contentType: 'application/json',
-        success: function(data){
-           loadagain(data,1);
+        success: function (data) {
+            loadagain(data, week);
         }
     })
 }
@@ -19,12 +19,12 @@ function loadagain(finaldata, week) {
     let tedges = [];
     let users = [];
     let user_dic = {};
-    
+
     let follower_status = ["followers", "newfollowers", "unfollowers"];
     let follower_list = ["follower_list", "newfollower_list", "unfollower_list"];
-    let data_length=finaldata.length;
+    let data_length = finaldata.length;
     let V;
-    let adjListArray=[];
+    let adjListArray = [];
     let id = 1;
     let ids = [];
 
@@ -50,6 +50,7 @@ function loadagain(finaldata, week) {
             tnode2['cluster'] = j;
             tnode2['radius'] = finaldata[i][follower_status[j - 1]];
             tnode2['week'] = week;
+            tnode2['userid'] = finaldata[i].user + "_" + j;
             tnodes.push(tnode2);
 
 
@@ -57,6 +58,7 @@ function loadagain(finaldata, week) {
             tedge['source'] = user_dic[finaldata[i].user].toString();
             tedge['target'] = (user_dic[finaldata[i].user] + j).toString();
             tedge['radius'] = finaldata[i][follower_status[j - 1]];
+            tedge['link_id'] = finaldata[i].user + "_l";
             tedges.push(tedge);
 
             finaldata[i][follower_list[j - 1]].forEach(function (d) {
@@ -67,64 +69,64 @@ function loadagain(finaldata, week) {
                     tedge['radius'] = 1;
                     tedge['arrow'] = false;
                     tedge['cluster'] = 1;
+                    tedge['link_id'] = finaldata[i].user + "_l";
                     tedges.push(tedge);
                 }
             }
             )
         }
     }
-    
- 
-    
-    let my_dict=tedges;
+
+
+
+    let my_dict = tedges;
     let dict_length = my_dict.length;
 
     Graph(tnodes.length);
-    function Graph(v){   
-        V=v;
+    function Graph(v) {
+        V = v;
         for (let i = 0; i < v; i++) {
             adjListArray.push([]);
         }
     }
-    
-    for(var i = 0 ; i < dict_length ; i++){
-        addEdge(my_dict[i]['source'],my_dict[i]['target']);
-     }
-     connectedComponents();
-    
-    function addEdge(src,dest){
+
+    for (var i = 0; i < dict_length; i++) {
+        addEdge(my_dict[i]['source'], my_dict[i]['target']);
+    }
+    connectedComponents();
+
+    function addEdge(src, dest) {
         adjListArray[src].push(dest);
         adjListArray[dest].push(src);
     }
 
-    function connectedComponents(){
+    function connectedComponents() {
         let visited = new Array(V);
-        for(let i = 1; i < V; i++){
+        for (let i = 1; i < V; i++) {
             visited[i] = false;
         }
-        for (let v = 1; v < V; ++v){
-            if (!visited[v]){
+        for (let v = 1; v < V; ++v) {
+            if (!visited[v]) {
                 DFSUtil(v, visited);
                 id++;
             }
         }
     }
 
-    function DFSUtil(v,visited){
+    function DFSUtil(v, visited) {
         visited[v] = true;
         ids[v] = id;
-        for (let x = 0; x < adjListArray[v].length; x++){
-            if (!visited[adjListArray[v][x]]){
+        for (let x = 0; x < adjListArray[v].length; x++) {
+            if (!visited[adjListArray[v][x]]) {
                 DFSUtil(adjListArray[v][x], visited);
             }
         }
     }
-    
-    for(var i = 0 ; i < my_dict.length ; i++){
-        if(ids[my_dict[i].source]==undefined){
+
+    for (var i = 0; i < my_dict.length; i++) {
+        if (ids[my_dict[i].source] == undefined) {
         }
         my_dict[i].id = ids[my_dict[i].source];
     }
-    Gr = { "nodes": tnodes, "links": my_dict};
-    
+    Gr = { "nodes": tnodes, "links": my_dict };
 }

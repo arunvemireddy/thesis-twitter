@@ -36,7 +36,7 @@ refresh.on("click", function () {
             d3.selectAll(".weekText").text("week" + 1);  // reset week text to 1
             d3.selectAll(".slider").attr("value", "1");  // reset slider
             setTemp(n);
-            m['j'].update(Gr);
+            m['graph'].update(Gr);
         });
             // re(Gr);
     });
@@ -399,15 +399,17 @@ function _createSVG(width, height) {
 
             node.on("click", (event, d) => {
                 setTemp(node.attr("value"));
+                console.log("tets");
                 let group = event.group;
                 setCluster(group);
                 let nf = nodes.filter(d => d.group == group);
                 let lf = links.filter(d => d.id == group);
                 let graph = { "nodes": nf, "links": lf }
                 obj.forEach(function (m, n) {
-                    if (m['i'] == temp) {
+                    if (m['idx'] == temp) {
                         // cluster = graph;
-                        m['j'].update(graph);
+                        console.log("tets");
+                        m['graph'].init(graph);
                     }
                 });
             })

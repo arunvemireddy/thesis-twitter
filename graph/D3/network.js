@@ -105,6 +105,8 @@ function addSlider(div) {
             console.log(obj);
         })
 
+       
+
 }
 
 function _createSVG(width, height) {
@@ -142,14 +144,32 @@ function _createSVG(width, height) {
 
     addSlider(div);
 
-    let accbutton = div.append("button")
-                .attr("class","accordion")
-                .text("user details")
-                // .on("click",);
-
     let paneldiv = div.append("div")
                     .attr("class","panel")
-                    .append("p");
+                    .style("display","none")
+                    .style("position","absolute")
+                    paneldiv.append("p")
+                    
+
+    let accbutton = div.append("button")
+                        .attr("class","accordion")
+                        .text("Details")
+                        .on("click",()=>{
+                            if (paneldiv.style("display") == "block") {
+                                paneldiv.style("display","none");
+                            } else {
+                                paneldiv.style("display",'block');
+                            }
+                        })
+
+    
+
+    
+
+   
+                // .on("click",);
+
+   
 
     let svg_root = div // create svg
         .append("svg")
@@ -168,7 +188,7 @@ function _createSVG(width, height) {
         .attr("z-index", -1)
         .attr("position", "relative")
         .attr("viewBox", [-width / 2, -height / 2, width, height])
-    let svg =     svg_root.append("g")
+    let svg = svg_root.append("g")
         .attr("id", "g" + svgId)
         // .attr("transform", "translate(" + width/2 + "," + height/2 + ")")
         // .append("g");    

@@ -250,9 +250,13 @@ function _createSVG(width, height) {
 
     function filterGroup(nodes, links){
         let groupIds = [];  // make groupId's empty 
-
         let n = [];
         let l = [];
+
+        // links.forEach(function(d,i){
+        //     console.log(d.arrow==false?d.arrow:NaN);
+        // })
+
         links.forEach(function (d, i) { // assigning group to nodes using links
             let idx1 = nodes.findIndex(n => n.id == d.source);
             let idx2 = nodes.findIndex(n => n.id == d.target);
@@ -494,7 +498,7 @@ function _createSVG(width, height) {
             let l = result[1];
             let groupIds = result[2];
 
-            console.log(groupIds);
+          
             let new_node = {};
             let new_link = {};
 
@@ -502,27 +506,20 @@ function _createSVG(width, height) {
                 if(d.userid != undefined)
                 new_node["l" + d.userid] = d; 
             });
-
-            l.forEach((d)=>{
-               new_link[d["link_id"]] = d;
-            });
+       
 
             node.attr("r", function(d,i){
-                
                 d.radius = (new_node["l" + d.userid] == undefined)? 0: new_node["l" + d.userid].radius;
-                // console.log(d.rai);
                 return (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : null;
             })
 
             link.attr('stroke', function (d2) {
-                let d = new_link[d2.link_id];
-                 console.log(d);
-                if (d != undefined){
-                    if (d.radius >= 0) {
-                        let x = "m" + d.id; 
-                        d3.select("#n" + d.source.id).attr("class", x); // assiging class to nodes
-                        d3.select("#n" + d.target.id).attr("class", x);
-                        if (d.arrow == false) {
+                if (d2 != undefined){
+                    if (d2.target.radius > 0) {
+                        let x = "m" + d2.id; 
+                        d3.select("#n" + d2.source.id).attr("class", x); // assiging class to nodes
+                        d3.select("#n" + d2.target.id).attr("class", x);
+                        if (d2.arrow == false) {
                             return 'rgb(250,2,229)';
                         } else {
                             return 'black';
@@ -547,7 +544,6 @@ export function _callApi(w, users) {
     console.log(w);
     let x = _call(w, users);
     x.then(function () {
-        network_data = Gr;
         de(Gr);
     });
 }

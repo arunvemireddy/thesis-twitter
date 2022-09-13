@@ -15,78 +15,84 @@
     body{
         height: 100%;
     }
-         .sliders {
-        margin: auto;
-        width: 20%;
-        float: right;
-    }
-
-    .sliders label {
-        display: block;
-        font-weight: bold;
-    }
-
-    .sliders input {
-        display: block;
-        width: 100%;
-        margin: 5px 0;
-    }
     #svg{
         display: flex;
     }
     path {
-  fill-opacity: .1;
-  stroke-opacity: 1;
-}
+        fill-opacity: .1;
+        stroke-opacity: 1;
+    }
 
-.tooltip .tooltiptext {
-    visibility: hidden;
-}
-.tooltip:hover .tooltiptext {
-  visibility: visible;
-}
+    .tooltip .tooltiptext {
+        visibility: hidden;
+    }
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+    }
 
-#menu{
-    background: rbg(218,237,245);
-    float: left;
-    width: 15%;
-    height: 100%;
-}
+    #menu{
+        background: rbg(218,237,245);
+        float: left;
+        width: 15%;
+        height: 100%;
+    }
 
-.accordion {
-  color: #444;
-  cursor: pointer;
-  padding: 18px;
-  width: 15%;
-  border: none;
-  text-align: left;
-  outline: none;
-  font-size: 15px;
-  transition: 0.4s;
-  background: rgba(255, 255, 255, 0);
-  border-radius: 16px;
-  /* box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); */
-  /* border: 1px solid rgba(255, 255, 255, 0.37); */
-  position: absolute;
-}
+    #visdiv{
+        position: relative;
+    }
 
-.slider{
-  background: rgba(255, 255, 255, 0);
-  border-radius: 16px;
-  /* position: absolute;   */
-}
+    .svgMenu{
+        position: absolute;
+        background: rgba(255, 255, 255, 0.43);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        width: 100%;
+    }
 
-.active, .accordion:hover {
-  background-color: #ccc; 
-}
+    .weekText{
+        border-radius: 16px;
+        padding: 2px 2px 2px 2px;
+        font-size: xx-large;
+    }
 
-.panel {
-  padding: 0 18px;
-  display: none;
-  background: rgba(255, 255, 255, 0);;
-  overflow: hidden;
-}
+    .slider{
+        border-radius: 16px;
+        padding: 2px 2px 2px 2px;
+    }
 
+    /* .weekText .slider{
+        background: rgba(255, 255, 255, 0.43);
+        background: rgba(255, 255, 255, 0.43);
+    } */
+
+    .closeBtn{
+        font-size: larger;
+        border-radius: 2px;
+    }
+
+    .info_btn {
+        position: absolute;
+        margin: 40px 0px 0px 0px;
+        padding: 10px 20px 10px 20px;
+    }
+
+    .active, .accordion:hover {
+        background-color: #ccc; 
+    }
+
+    .info_panel {
+        /* position: relative; */
+        padding: 0 18px;
+        display: none;
+        background: rgba(255, 255, 255, 0);
+    }
+
+    .button{
+        background: rgb(143, 173, 194);
+    }
+
+    .button:hover{
+        background: rgb(92, 146, 184);
+    }
     </style>
 </head>
 
@@ -99,7 +105,7 @@
     </div>
     
 
-    <div class="sliders" id="slide" style="z-index: 1;position: relative;"></div>
+    <div class="sliders" id="slide" style="position: relative;"></div>
    
     <div id="scaleFactorSettings">
         <!-- <p>Scale of the groups: <span id='scaleFactorLabel'>1.2</span></p> -->

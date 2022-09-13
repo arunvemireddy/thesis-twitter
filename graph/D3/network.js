@@ -55,121 +55,84 @@ add.on("click", () => {        // add button to create new vis
 
 
 
-function addSlider(div) {
+function addSlider(vis_div) {
 
-    let slider = div  // week slider
-        .append("input")
-        .style("display", "block")
-        .attr("id", "week" + svgId)
-        .attr("type", "range")
-        .attr("class", "slider")
-        .attr("min", 1)
-        .attr("max", 15)
-        .attr("value", 1)
-        .attr("step", 1)
-        .style("float", "left")
-        .on("change", function () {
-            setTemp(d3.select(this).attr('id').replace('weeksvg', ''));
-            let val = +d3.select(this).property("value");
-            d3.select(this).attr("value", val);
-            d3.select(this).attr("defaultValue", val);
-            weekno.text("week" + val);
-            _callApi(val, users);
-        })
+    let div = vis_div.append("div")
+                .attr("class","svgMenu")
 
-    let weekno = div // week text
-        .append("text")
-        .attr("class","weekText")
-        .attr("id", "weeks" + svgId)
-        .text("week" + 1)
-        .attr("value", "week" + 1)
-        .style("font-size", "x-large");
+    let weekno = div.append("text")
+                    .attr("class","weekText")
+                    .attr("id", "weeks" + svgId)
+                    .text("week " + 1)
+                    .attr("value", "week" + 1)
 
-    weekno.append("br");
+    let slider = div.append("input")
+                .attr("id", "week" + svgId)
+                .attr("type", "range")
+                .attr("class", "slider")
+                .attr("min", 1)
+                .attr("max", 15)
+                .attr("value", 1)
+                .attr("step", 1)
+                .on("change", function () {
+                    setTemp(d3.select(this).attr('id').replace('weeksvg', ''));
+                    let val = +d3.select(this).property("value");
+                    d3.select(this).attr("value", val);
+                    d3.select(this).attr("defaultValue", val);
+                    weekno.text("week" + val);
+                    _callApi(val, users);
+                })
 
-    let close = div   // close svg button
-        .append("button")
-        .attr("class", "close")
-        .attr("id", "close" + svgId)
-        .text("X")
-        .style("float", "right")
-        .on("click", function () {
-            let temp = d3.select(this).attr('id').replace('closesvg', '');
-            setTemp(temp);
-            obj.forEach(function (m, n) {
-                if (m['i'] == temp) {
-                    obj.splice(n, 1);
-                }
-            })
-            d3.select("#dsvg" + temp).remove();
-            console.log(obj);
-        })
-
-       
-
+    let close = div.append("button")
+                    .attr("class", "button closeBtn")
+                    .attr("id", "close" + svgId)
+                    .text("X")
+                    .on("click", function () {
+                        let temp = d3.select(this).attr('id').replace('closesvg', '');
+                        setTemp(temp);
+                        obj.forEach(function (m, n) {
+                            if (m['i'] == temp) {
+                                obj.splice(n, 1);
+                            }
+                        })
+                        d3.select("#dsvg" + temp).remove();
+                        console.log(obj);
+                    })
 }
 
 function _createSVG(width, height) {
+    var polygon, centroid;
 
-    console.log(width)
-    let simulation = d3.forceSimulation()  // create simulation
-    .force("charge", d3.forceManyBody().strength(-60))
-    .force("link", d3.forceLink().id(d => d.id).distance(30))
-    .force("x", d3.forceX())
-    .force("y", d3.forceY())
+    /**force simulation */
+    let simulation = d3.forceSimulation()  
+                    .force("charge", d3.forceManyBody().strength(-60))
+                    .force("link", d3.forceLink().id(d => d.id).distance(30))
+                    .force("x", d3.forceX())
+                    .force("y", d3.forceY())
 
 
     count == undefined ? setCount(0) : setCount(count + 1);
     setSvgId("svg" + count);  // set svgId
     setTemp(count);  // set temp value
 
-    var polygon, centroid;
-
-    let div = visdiv
-        .append("div")
+    let div = visdiv.append("div")
         .attr("id", "d" + svgId)
         .style("width", width)
         .style("height", height)
         .style("background", "azure");
 
-    let textbox = d3.select("#d" + svgId)
-        .append("rect")
-        // .style("border","double")
-        .style("position", "absolute")
-        .attr("id", "text" + svgId)
-        .attr("value", "arun");
-
-    
-        addSlider  
-
     addSlider(div);
 
-    let paneldiv = div.append("div")
-                    .attr("class","panel")
-                    .style("display","none")
-                    .style("position","absolute")
-                    paneldiv.append("p")
+    let info_btn = div.append("button")
+                    .attr("class","button info_btn")
+                    .text("Info")
+
+    let info_panel = div.append("div")
+                    .attr("class","info_panel")
                     
-
-    let accbutton = div.append("button")
-                        .attr("class","accordion")
-                        .text("Details")
-                        .on("click",()=>{
-                            if (paneldiv.style("display") == "block") {
-                                paneldiv.style("display","none");
-                            } else {
-                                paneldiv.style("display",'block');
-                            }
-                        })
-
-    
-
-    
-
-   
-                // .on("click",);
-
-   
+    let info_panel_para = info_panel.append("p")
+                    
+    info_btn.on("click",()=>{ info_panel.style("display") == "block" ? info_panel.style("display","none"):info_panel.style("display",'block')})
 
     let svg_root = div // create svg
         .append("svg")
@@ -365,7 +328,7 @@ function _createSVG(width, height) {
             for(let i=0;i<n.length;i++){
                 if(n[i]['cluster']==0){
                     u.push(n[i]['userid']);
-                    let t = paneldiv.append("text").attr("id","tesvg"+temp)
+                    let t = info_panel_para.append("text").attr("id","tesvg"+temp)
                     .text(n[i]['userid']);
                     t.append("br");
                 }

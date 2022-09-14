@@ -121,6 +121,19 @@ function _createSVG(width, height) {
 
     let info_panel_para = info_panel.append("p");
 
+    let user_info_panel = div.append("div")
+        .attr("class", "user_info_panel");
+
+    let user_info_panel_para = user_info_panel.append("p");
+
+    let user_info_labels = ["User Id","followers", "newfollowers", "unfollowers"];
+    let user_info_labels_text = ["userid","followers", "newfollowers", "unfollowers"];
+
+    for(let i=0;i<user_info_labels.length;i++){
+        user_info_labels_text[i] = user_info_panel_para.append("text").text(user_info_labels[i] + " ");
+        user_info_labels_text[i].append("br");
+    }
+
     info_btn.on("click", () => {
         info_panel.style("display") == "block" ? info_panel.style("display", "none") : info_panel.style("display", 'block')
     })
@@ -132,20 +145,12 @@ function _createSVG(width, height) {
         .attr("width", "100%    ")
         .attr("height", "100%")
         .attr("id", svgId)
-        // .on("mouseenter",()=>{
-        //     let e = svg.attr("id").replace("gsvg",'');
-        //     // console.log(e);
-        //     if(temp!=e){
-        //         setTemp(e);
-        //     }
-        // })
         .attr("z-index", -1)
         .attr("position", "relative")
         .attr("viewBox", [-width / 2, -height / 2, width, height])
     let svg = svg_root.append("g")
         .attr("id", "g" + svgId)
-    // .attr("transform", "translate(" + width/2 + "," + height/2 + ")")
-    // .append("g");    
+ 
 
     svg_root
         .call(d3.zoom().on('zoom', () => {
@@ -393,18 +398,26 @@ function _createSVG(width, height) {
                     }
                 });
             })
-
+           
+            let user_info = ["userid","followers", "newfollowers", "unfollowers"];
+;
             node.on("mouseenter", (d, i) => {
-                let x = d.id;
-                console.log(d);
-                console.log(i);
-                // let c = svg.select("#n" + x).attr('class').toString();
+                user_info_panel.style("visibility","visible");
+                for(let i=0;i<user_info_labels.length;i++){
+                    let y = user_info[i];
+                    user_info_labels_text[i].text(user_info_labels[i] + " " + d[y]);
+                    user_info_labels_text[i].append("br");
+                    
+                }
                 svg.selectAll("." + d.className).attr("opacity", 1);
             })
                 .on("mouseleave", (d, i) => {
+                    user_info_panel.style("visibility","hidden");
                     let x = d.id;
                     let c = d3.select("#n" + x).attr('class').toString();
                     d3.selectAll("." + c).attr("opacity", 0.5);
+                    
+                    // user_info_panel_para.remove();
                 })
                 .on('dbclick', () => {
                     console.log("dbclick");

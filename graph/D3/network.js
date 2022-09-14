@@ -1,4 +1,4 @@
-import { count, temp, setCount, svgId, setSvgId, setTemp, visdiv, obj, setObj, select, cluster, setCluster, radius, color, scaleFactor, colors, refresh, add} from "./index.js";
+import { count, temp, setCount, svgId, setSvgId, setTemp, visdiv, obj, setObj, select, cluster, setCluster, radius, color, scaleFactor, colors, refresh, add } from "./index.js";
 
 var innerWidth = window.innerWidth;
 var innerHeight = window.innerHeight;
@@ -7,18 +7,7 @@ let svgRet = new _createSVG(innerWidth, innerHeight);
 setObj(0, svgRet);  // storing in object
 setTemp(0);
 
-// let simulation = d3.forceSimulation()  // create simulation
-//     .force("charge", d3.forceManyBody().strength(-60))
-//     .force("link", d3.forceLink().id(d => d.id).distance(30))
-//     .force("x", d3.forceX())
-//     .force("y", d3.forceY())
-
-let network_data;
-
-
-var t;
 var users = [];
-// let cluster = [];
 
 let valueline = d3.line()    // curve type
     .x(function (d) { return d[0]; })
@@ -38,17 +27,15 @@ refresh.on("click", function () {
             setTemp(n);
             m['graph'].update(Gr);
         });
-            // re(Gr);
     });
 })
 
 /** + button */
-add.on("click", () => {        // add button to create new vis
+add.on("click", () => {
     let x = _call(1, users);
     x.then(function (data) {
         let svgRet = new _createSVG(innerWidth, innerHeight);
         setObj(count, svgRet, true);
-        // obj.push({ "idx": count, "graph": svg, "init": false })
         svgRet.init(Gr);
     });
 })
@@ -58,59 +45,59 @@ add.on("click", () => {        // add button to create new vis
 function addSlider(vis_div) {
 
     let div = vis_div.append("div")
-                .attr("class","svgMenu")
+        .attr("class", "svgMenu")
 
     let weekno = div.append("text")
-                    .attr("class","weekText")
-                    .attr("id", "weeks" + svgId)
-                    .text("week " + 1)
-                    .attr("value", "week" + 1)
+        .attr("class", "weekText")
+        .attr("id", "weeks" + svgId)
+        .text("week " + 1)
+        .attr("value", "week" + 1)
 
     let slider = div.append("input")
-                .attr("id", "week" + svgId)
-                .attr("type", "range")
-                .attr("class", "slider")
-                .attr("min", 1)
-                .attr("max", 15)
-                .attr("value", 1)
-                .attr("step", 1)
-                .on("change", function () {
-                    setTemp(d3.select(this).attr('id').replace('weeksvg', ''));
-                    let val = +d3.select(this).property("value");
-                    d3.select(this).attr("value", val);
-                    d3.select(this).attr("defaultValue", val);
-                    weekno.text("week" + val);
-                    _callApi(val, users);
-                })
+        .attr("id", "week" + svgId)
+        .attr("type", "range")
+        .attr("class", "slider")
+        .attr("min", 1)
+        .attr("max", 15)
+        .attr("value", 1)
+        .attr("step", 1)
+        .on("change", function () {
+            setTemp(d3.select(this).attr('id').replace('weeksvg', ''));
+            let val = +d3.select(this).property("value");
+            d3.select(this).attr("value", val);
+            d3.select(this).attr("defaultValue", val);
+            weekno.text("week" + val);
+            _callApi(val, users);
+        })
 
     let close = div.append("button")
-                    .attr("class", "button closeBtn")
-                    .attr("id", "close" + svgId)
-                    .text("X")
-                    .on("click", function () {
-                        let temp = d3.select(this).attr('id').replace('closesvg', '');
-                        setTemp(temp);
-                        obj.forEach(function (m, n) {
-                            if (m['i'] == temp) {
-                                obj.splice(n, 1);
-                            }
-                        })
-                        d3.select("#dsvg" + temp).remove();
-                        console.log(obj);
-                    })
+        .attr("class", "button closeBtn")
+        .attr("id", "close" + svgId)
+        .text("X")
+        .on("click", function () {
+            let temp = d3.select(this).attr('id').replace('closesvg', '');
+            setTemp(temp);
+            obj.forEach(function (m, n) {
+                if (m['i'] == temp) {
+                    obj.splice(n, 1);
+                }
+            })
+            d3.select("#dsvg" + temp).remove();
+            console.log(obj);
+        })
 }
 
 function _createSVG(width, height) {
     var polygon, centroid;
-    let info_labels = ["Users","Followers","New Followers","Unfollowers"];
-    let info_labels_text = ["Users","Followers","New Followers","Unfollowers"];
+    let info_labels = ["Users", "Followers", "New Followers", "Unfollowers"];
+    let info_labels_text = ["Users", "Followers", "New Followers", "Unfollowers"];
 
     /**force simulation */
-    let simulation = d3.forceSimulation()  
-                    .force("charge", d3.forceManyBody().strength(-60))
-                    .force("link", d3.forceLink().id(d => d.id).distance(30))
-                    .force("x", d3.forceX())
-                    .force("y", d3.forceY())
+    let simulation = d3.forceSimulation()
+        .force("charge", d3.forceManyBody().strength(-60))
+        .force("link", d3.forceLink().id(d => d.id).distance(30))
+        .force("x", d3.forceX())
+        .force("y", d3.forceY())
 
 
     count == undefined ? setCount(0) : setCount(count + 1);
@@ -126,15 +113,17 @@ function _createSVG(width, height) {
     addSlider(div);
 
     let info_btn = div.append("button")
-                    .attr("class","button info_btn")
-                    .text("Info")
+        .attr("class", "button info_btn")
+        .text("Info")
 
     let info_panel = div.append("div")
-                    .attr("class","info_panel")
-                    
+        .attr("class", "info_panel")
+
     let info_panel_para = info_panel.append("p");
-                    
-    info_btn.on("click",()=>{ info_panel.style("display") == "block" ? info_panel.style("display","none"):info_panel.style("display",'block')})
+
+    info_btn.on("click", () => {
+        info_panel.style("display") == "block" ? info_panel.style("display", "none") : info_panel.style("display", 'block')
+    })
 
     let svg_root = div // create svg
         .append("svg")
@@ -155,76 +144,55 @@ function _createSVG(width, height) {
         .attr("viewBox", [-width / 2, -height / 2, width, height])
     let svg = svg_root.append("g")
         .attr("id", "g" + svgId)
-        // .attr("transform", "translate(" + width/2 + "," + height/2 + ")")
-        // .append("g");    
+    // .attr("transform", "translate(" + width/2 + "," + height/2 + ")")
+    // .append("g");    
 
-        svg_root
-        .call(d3.zoom().on('zoom', ()=>{
+    svg_root
+        .call(d3.zoom().on('zoom', () => {
             svg.attr('transform', d3.event.transform);
         }));
 
-        svg.append("rect")
+    svg.append("rect")
         .attr("width", width)
         .attr("height", height)
-        .attr("x",0)
-        .attr("y",0)
+        .attr("x", 0)
+        .attr("y", 0)
         .attr("opacity", 0);
-        
-        simulation.on("tick", tick);
 
-        function tick() {
-            new_tick();
-            // updateGroups();
-        }
-        function new_tick() {
+    simulation.on("tick", tick);
 
-            node.attr("cx", d => d.x) // position of nodes
-                .attr("cy", d => d.y);
+    function tick() {
+        new_tick();
+        // updateGroups();
+    }
+    function new_tick() {
 
-            link.attr("x1", d => d.source.x) // position of links
-                .attr("y1", d => d.source.y)
-                .attr("x2", d => d.target.x)
-                .attr("y2", d => d.target.y)
-                .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);
+        node.attr("cx", d => d.x) // position of nodes
+            .attr("cy", d => d.y);
 
-            svg.append('defs').append('marker')
-                .attrs({
-                    'id': 'arrowhead',
-                    'viewBox': '-0 -5 10 10',
-                    'refX': 13,
-                    'refY': 0,
-                    'orient': 'auto',
-                    'markerWidth': 5,
-                    'markerHeight': 5,
-                    'xoverflow': 'visible'
-                })
-                .append('svg:path')
-                .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
-                .attr('fill', 'black')
-                .style('stroke', 'black');
-        }
+        link.attr("x1", d => d.source.x) // position of links
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y)
+            .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);
 
+        svg.append('defs').append('marker')
+            .attrs({
+                'id': 'arrowhead',
+                'viewBox': '-0 -5 10 10',
+                'refX': 13,
+                'refY': 0,
+                'orient': 'auto',
+                'markerWidth': 5,
+                'markerHeight': 5,
+                'xoverflow': 'visible'
+            })
+            .append('svg:path')
+            .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+            .attr('fill', 'black')
+            .style('stroke', 'black');
+    }
 
-    // let cb = svg  //week checkbox 
-    //             .append("div")
-    //             .attr("class","cb");
-
-
-    // let tooltip = d3.select('#svg')  //tool tip
-    //                 .append("div")
-    //                 .attr("class","tooltip")
-    //                 .text("users")
-    //                 // .style("height","auto")
-    //                 // .style("position","relative");
-
-    // let tooltipText = tooltip.append("span")
-    //                     .attr("class","tooltiptext")
-    //                     .attr("position","absolute")
-    //                     .text("arun");
-    // tooltipText.text("arun");
-
-    // tooltipText.text(n.length);
-    // d3.selectAll("tooltipText").text(users);
 
 
     /** forced layout */
@@ -233,7 +201,7 @@ function _createSVG(width, height) {
     let link = svg.append("g").selectAll("line").attr("class", "links"); // create links
 
 
-    function filterGroup(nodes, links){
+    function filterGroup(nodes, links) {
         let groupIds = [];  // make groupId's empty 
         let n = [];
         let l = [];
@@ -247,20 +215,7 @@ function _createSVG(width, height) {
             let idx2 = nodes.findIndex(n => n.id == d.target);
             nodes[idx1]['group'] = d.id.toString();
             nodes[idx2]['group'] = d.id.toString();
-            // if (nodes[idx1]['radius'] > 0 && nodes[idx2]['radius'] > 0) {
-            //     if (nodes[idx1]['radius'] > 0) {
-            //         nodes[idx1]['group'] = d.id.toString();
-            //     }
-            //     if (nodes[idx2]['radius'] > 0) {
-            //         nodes[idx2]['group'] = d.id.toString();
-            //     }
-            // } else {
-            //     links[i]['id'] = -1;
-            // }
-
         })
-
-        // links.filter(function (d, i) { return d.id != -1 });  // removing unnecessary links
 
         groupIds = d3.set(nodes.filter(function (n) { return n.radius > 0 })
             .map(function (n) { return +n.group; })) // filtering groupId's repeated more than 4 times
@@ -268,8 +223,6 @@ function _createSVG(width, height) {
             .map(function (groupId) {
                 return {
                     groupId: groupId, count: nodes.filter(function (n) {
-                        // console.log(n);
-                        // console.log(groupId);
                         return n.group == groupId;
                     }).length
                 };
@@ -306,16 +259,44 @@ function _createSVG(width, height) {
     }
 
 
-    function calculateInfo(n){
-        let total_users=0;
-        let total_followers=0;
-        let total_unfollowers=0;
-        let total_newfollowers=0;
+    function calculateInfo(n) {
+        let total_users = 0;
+        let total_followers = 0;
+        let total_unfollowers = 0;
+        let total_newfollowers = 0;
 
-        for(let i=0;i<n.length;i++){
-            n[i]['radius']>0?n[i]['cluster']==0?total_users = total_users+1:n[i]['cluster']==1?total_followers=total_followers+n[i]['radius']:n[i]['cluster']==2?total_newfollowers = total_newfollowers+n[i]['radius']:n[i]['cluster']==3?total_unfollowers = total_unfollowers+n[i]['radius']:NaN:NaN;
+        for (let i = 0; i < n.length; i++) {
+            n[i]['radius'] > 0 ? n[i]['cluster'] == 0 ? total_users = total_users + 1 : n[i]['cluster'] == 1 ? total_followers = total_followers + n[i]['radius'] : n[i]['cluster'] == 2 ? total_newfollowers = total_newfollowers + n[i]['radius'] : n[i]['cluster'] == 3 ? total_unfollowers = total_unfollowers + n[i]['radius'] : NaN : NaN;
         }
-        return [total_users,total_followers,total_newfollowers,total_unfollowers];
+        return [total_users, total_followers, total_newfollowers, total_unfollowers];
+    }
+
+
+    function polygonGenerator(groupId) {  // create polygon around cluster
+        var node_coords = node
+            .filter(function (d) {
+                return d.group == groupId;
+            })
+            .data()
+            .map(function (d) { return [d.x, d.y]; });
+        return d3.polygonHull(node_coords);
+    };
+
+    function drawPolygons(groupIds, paths) {
+        groupIds.forEach(function (groupId) {
+            var path = paths.filter(function (d) { return d == groupId; })
+                .attr('transform', 'scale(1) translate(0,0)')
+                .attr('d', function (d) {
+                    polygon = polygonGenerator(d);
+                    centroid = d3.polygonCentroid(polygon);
+                    return valueline(
+                        polygon.map(function (point) {
+                            return [point[0] - centroid[0], point[1] - centroid[1]];
+                        })
+                    );
+                });
+            d3.select(path.node().parentNode).attr('transform', 'translate(' + centroid[0] + ',' + (centroid[1]) + ') scale(' + scaleFactor + ')');
+        })
     }
 
     /** init */
@@ -332,20 +313,20 @@ function _createSVG(width, height) {
                 updateGroups();
             });
 
-            
+
             let result = filterGroup(nodes, links);
             let n = result[0];
             let l = result[1];
             let groupIds = result[2];
-            
+
             let graph_details = calculateInfo(n);
             info_panel_para.remove();
             info_panel_para = info_panel.append("p")
-            for(let i=0;i<4;i++){
-                info_labels_text[i] = info_panel_para.append("text").attr("id","tesvg"+info_labels[i]+temp).text(info_labels[i] +" "+ graph_details[i]);
+            for (let i = 0; i < 4; i++) {
+                info_labels_text[i] = info_panel_para.append("text").attr("id", "tesvg" + info_labels[i] + temp).text(info_labels[i] + " " + graph_details[i]);
                 info_panel_para.append("br");
             }
-         
+
             const old = new Map(node.data().map(d => [d.id, d]));
             n = n.map(d => Object.assign(old.get(d.id) || {}, d));
             l = l.map(d => Object.assign({}, d));
@@ -382,7 +363,7 @@ function _createSVG(width, height) {
             link.attr('stroke', function (d) {
                 if (d.radius > 0) {
                     let x = "m" + d.id;
-                    d.source.className = d.target.className = x; 
+                    d.source.className = d.target.className = x;
                     svg.select("#n" + d.source.id).attr("class", x); // assiging class to nodes
                     svg.select("#n" + d.target.id).attr("class", x);
                     if (d.arrow == false) {
@@ -429,13 +410,7 @@ function _createSVG(width, height) {
                     console.log("dbclick");
                 });
 
-                simulation.on("tick", tick);
-
-                function tick() {
-                    new_tick();
-                    updateGroups();
-                }
-
+            simulation.on("tick", tick);
 
             let paths = groups.selectAll('.path_placeholder')
                 .attr("id", "pathsvg" + temp)
@@ -447,14 +422,14 @@ function _createSVG(width, height) {
                         .attr('class', 'path_placeholder')
                         .attr("id", "pathsvg" + temp)
                         .append('path')
-                        .attr('stroke', function (d) { return color(d); })
-                        .attr('fill', function (d) { return color(d); })
+                        .attr('stroke', function (d) { return "darkmagenta" })
+                        .attr('fill', function (d) { return "darkmagenta" })
                         .attr("opacity", 1),
                     update => update
                         .attr("id", "pathsvg" + temp)
                         .append('path')
-                        .attr('stroke', function (d) { return color(d); })
-                        .attr('fill', function (d) { return color(d); })
+                        .attr('stroke', function (d) { return "rgb(31, 119, 180)" })
+                        .attr('fill', function (d) { return "rgb(31, 119, 180)" })
                         .attr("opacity", 1),
                     exit => exit.remove()
                 );
@@ -464,68 +439,44 @@ function _createSVG(width, height) {
                 .attr("opacity", 1);
 
 
-            function polygonGenerator(groupId) {  // create polygon around cluster
-                var node_coords = node
-                    .filter(function (d) {
-                        return d.group == groupId;
-                    })
-                    .data()
-                    .map(function (d) { return [d.x, d.y]; });
-                return d3.polygonHull(node_coords);
-            };
-
-            //    groupIds = groupIds.filter(function(e){return e!=0}); // remove groupId of hidden nodes;
-
-            function updateGroups() {
-                groupIds.forEach(function (groupId) {
-                    var path = paths.filter(function (d) { return d == groupId; })
-                        .attr('transform', 'scale(1) translate(0,0)')
-                        .attr('d', function (d) {
-                            polygon = polygonGenerator(d);
-                            centroid = d3.polygonCentroid(polygon);
-                            return valueline(
-                                polygon.map(function (point) {
-                                    return [point[0] - centroid[0], point[1] - centroid[1]];
-                                })
-                            );
-                        });
-                    d3.select(path.node().parentNode).attr('transform', 'translate(' + centroid[0] + ',' + (centroid[1]) + ') scale(' + scaleFactor + ')');
-                })
+            function tick() {
+                new_tick();
+                drawPolygons(groupIds, paths);
             }
         },
-        update({nodes, links}){
+        update({ nodes, links }) {
 
             let result = filterGroup(nodes, links);
             let n = result[0];
             let l = result[1];
             let groupIds = result[2];
 
-          
+
             let new_node = {};
             let new_link = {};
 
-            n.forEach((d)=>{
-                if(d.userid != undefined)
-                new_node["l" + d.userid] = d; 
+            n.forEach((d) => {
+                if (d.userid != undefined)
+                    new_node["l" + d.userid] = d;
             });
 
             let graph_details = calculateInfo(n);
-       
 
-            for(let i=0;i<4;i++){
-                info_labels_text[i].text(info_labels[i] +" "+ graph_details[i]);
+
+            for (let i = 0; i < 4; i++) {
+                info_labels_text[i].text(info_labels[i] + " " + graph_details[i]);
             }
-       
 
-            node.attr("r", function(d,i){
-                d.radius = (new_node["l" + d.userid] == undefined)? 0: new_node["l" + d.userid].radius;
+
+            node.attr("r", function (d, i) {
+                d.radius = (new_node["l" + d.userid] == undefined) ? 0 : new_node["l" + d.userid].radius;
                 return (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : null;
             })
 
             link.attr('stroke', function (d2) {
-                if (d2 != undefined){
+                if (d2 != undefined) {
                     if (d2.target.radius > 0) {
-                        let x = "m" + d2.id; 
+                        let x = "m" + d2.id;
                         d3.select("#n" + d2.source.id).attr("class", x); // assiging class to nodes
                         d3.select("#n" + d2.target.id).attr("class", x);
                         if (d2.arrow == false) {
@@ -537,7 +488,7 @@ function _createSVG(width, height) {
                         return 'none';
                     }
                 }
-                return "none";        
+                return "none";
             }
             )
 
@@ -560,11 +511,11 @@ export function _callApi(w, users) {
 function de(data) {
     obj.forEach(function (m, n) {
         if (m['idx'] == temp) {
-            if(m['init'] === false){
+            if (m['init'] === false) {
                 m['graph'].init(data);
                 m["init"] = true;
             }
-            else{
+            else {
                 m['graph'].update(data);
             }
         }

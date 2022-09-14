@@ -102,6 +102,8 @@ function addSlider(vis_div) {
 
 function _createSVG(width, height) {
     var polygon, centroid;
+    let info_labels = ["Users","Followers","New Followers","Unfollowers"];
+    let info_labels_text = ["Users","Followers","New Followers","Unfollowers"];
 
     /**force simulation */
     let simulation = d3.forceSimulation()  
@@ -130,7 +132,7 @@ function _createSVG(width, height) {
     let info_panel = div.append("div")
                     .attr("class","info_panel")
                     
-    let info_panel_para = info_panel.append("p")
+    let info_panel_para = info_panel.append("p");
                     
     info_btn.on("click",()=>{ info_panel.style("display") == "block" ? info_panel.style("display","none"):info_panel.style("display",'block')})
 
@@ -302,6 +304,20 @@ function _createSVG(width, height) {
         }
         return [n, l, groupIds];
     }
+
+
+    function calculateInfo(n){
+        let total_users=0;
+        let total_followers=0;
+        let total_unfollowers=0;
+        let total_newfollowers=0;
+
+        for(let i=0;i<n.length;i++){
+            n[i]['radius']>0?n[i]['cluster']==0?total_users = total_users+1:n[i]['cluster']==1?total_followers=total_followers+n[i]['radius']:n[i]['cluster']==2?total_newfollowers = total_newfollowers+n[i]['radius']:n[i]['cluster']==3?total_unfollowers = total_unfollowers+n[i]['radius']:NaN:NaN;
+        }
+        return [total_users,total_followers,total_newfollowers,total_unfollowers];
+    }
+
     /** init */
     return Object.assign(svg.node(), {
         init({ nodes, links }) {
@@ -317,22 +333,19 @@ function _createSVG(width, height) {
             });
 
             
-            let u = [];
-            
-
             let result = filterGroup(nodes, links);
             let n = result[0];
             let l = result[1];
             let groupIds = result[2];
-
-            for(let i=0;i<n.length;i++){
-                if(n[i]['cluster']==0){
-                    u.push(n[i]['userid']);
-                    let t = info_panel_para.append("text").attr("id","tesvg"+temp)
-                    .text(n[i]['userid']);
-                    t.append("br");
-                }
+            
+            let graph_details = calculateInfo(n);
+            info_panel_para.remove();
+            info_panel_para = info_panel.append("p")
+            for(let i=0;i<4;i++){
+                info_labels_text[i] = info_panel_para.append("text").attr("id","tesvg"+info_labels[i]+temp).text(info_labels[i] +" "+ graph_details[i]);
+                info_panel_para.append("br");
             }
+         
             const old = new Map(node.data().map(d => [d.id, d]));
             n = n.map(d => Object.assign(old.get(d.id) || {}, d));
             l = l.map(d => Object.assign({}, d));
@@ -395,7 +408,6 @@ function _createSVG(width, height) {
                 obj.forEach(function (m, n) {
                     if (m['idx'] == temp) {
                         // cluster = graph;
-                        console.log("tets");
                         m['graph'].init(graph);
                     }
                 });
@@ -416,6 +428,13 @@ function _createSVG(width, height) {
                 .on('dbclick', () => {
                     console.log("dbclick");
                 });
+
+                simulation.on("tick", tick);
+
+                function tick() {
+                    new_tick();
+                    updateGroups();
+                }
 
 
             let paths = groups.selectAll('.path_placeholder')
@@ -457,22 +476,22 @@ function _createSVG(width, height) {
 
             //    groupIds = groupIds.filter(function(e){return e!=0}); // remove groupId of hidden nodes;
 
-            // function updateGroups() {
-            //     groupIds.forEach(function (groupId) {
-            //         var path = paths.filter(function (d) { return d == groupId; })
-            //             .attr('transform', 'scale(1) translate(0,0)')
-            //             .attr('d', function (d) {
-            //                 polygon = polygonGenerator(d);
-            //                 centroid = d3.polygonCentroid(polygon);
-            //                 return valueline(
-            //                     polygon.map(function (point) {
-            //                         return [point[0] - centroid[0], point[1] - centroid[1]];
-            //                     })
-            //                 );
-            //             });
-            //         d3.select(path.node().parentNode).attr('transform', 'translate(' + centroid[0] + ',' + (centroid[1]) + ') scale(' + scaleFactor + ')');
-            //     })
-            // }
+            function updateGroups() {
+                groupIds.forEach(function (groupId) {
+                    var path = paths.filter(function (d) { return d == groupId; })
+                        .attr('transform', 'scale(1) translate(0,0)')
+                        .attr('d', function (d) {
+                            polygon = polygonGenerator(d);
+                            centroid = d3.polygonCentroid(polygon);
+                            return valueline(
+                                polygon.map(function (point) {
+                                    return [point[0] - centroid[0], point[1] - centroid[1]];
+                                })
+                            );
+                        });
+                    d3.select(path.node().parentNode).attr('transform', 'translate(' + centroid[0] + ',' + (centroid[1]) + ') scale(' + scaleFactor + ')');
+                })
+            }
         },
         update({nodes, links}){
 
@@ -489,6 +508,13 @@ function _createSVG(width, height) {
                 if(d.userid != undefined)
                 new_node["l" + d.userid] = d; 
             });
+
+            let graph_details = calculateInfo(n);
+       
+
+            for(let i=0;i<4;i++){
+                info_labels_text[i].text(info_labels[i] +" "+ graph_details[i]);
+            }
        
 
             node.attr("r", function(d,i){

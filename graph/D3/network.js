@@ -89,7 +89,7 @@ function addSlider(vis_div) {
 
 function _createSVG(width, height) {
     var polygon, centroid;
-    let info_labels = ["Users", "Followers", "New Followers", "Unfollowers"];
+    let info_labels = ["Users", "Followers", "New Followers", "Unfollowers","Clusters"];
     let info_labels_text = ["Users", "Followers", "New Followers", "Unfollowers"];
 
     /**force simulation */
@@ -142,19 +142,21 @@ function _createSVG(width, height) {
         .append("svg")
         .style("display", "block")
         .style("margin", "auto")
-        .attr("width", "100%    ")
+        .attr("width", "100%")
         .attr("height", "100%")
         .attr("id", svgId)
         .attr("z-index", -1)
         .attr("position", "relative")
         .attr("viewBox", [-width / 2, -height / 2, width, height])
+       
     let svg = svg_root.append("g")
         .attr("id", "g" + svgId)
+        .attr("class","svgClass")
  
 
     svg_root
         .call(d3.zoom().on('zoom', () => {
-            svg.attr('transform', d3.event.transform);
+            d3.selectAll("."+"svgClass").attr('transform', d3.event.transform);
         }));
 
     svg.append("rect")
@@ -181,21 +183,21 @@ function _createSVG(width, height) {
             .attr("y2", d => d.target.y)
             .attr("marker-end", d => (d.radius > 0 & d.arrow != false) ? 'url(#arrowhead)' : NaN);
 
-        svg.append('defs').append('marker')
-            .attrs({
-                'id': 'arrowhead',
-                'viewBox': '-0 -5 10 10',
-                'refX': 13,
-                'refY': 0,
-                'orient': 'auto',
-                'markerWidth': 5,
-                'markerHeight': 5,
-                'xoverflow': 'visible'
-            })
-            .append('svg:path')
-            .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
-            .attr('fill', 'black')
-            .style('stroke', 'black');
+        // svg.append('defs').append('marker')
+        //     .attrs({
+        //         'id': 'arrowhead',
+        //         'viewBox': '-0 -5 10 10',
+        //         'refX': 13,
+        //         'refY': 0,
+        //         'orient': 'auto',
+        //         'markerWidth': 5,
+        //         'markerHeight': 5,
+        //         'xoverflow': 'visible'
+        //     })
+        //     .append('svg:path')
+        //     .attr('d', 'M 0,-5 L 10 ,0 L 0,5')
+        //     .attr('fill', 'black')
+        //     .style('stroke', 'black');
     }
 
 
@@ -351,13 +353,13 @@ function _createSVG(width, height) {
                 .append("title");
             node.exit().remove();
 
-            node.select('title').text(function (d) {
-                let userid = d['userid'];
-                let followers = d['followers'];
-                let unfollowers = d['unfollowers'];
-                let newfollowers = d['newfollowers'];
-                return 'userid ' + userid + '\n' + 'followers ' + followers + '\n' + 'unfollowers ' + unfollowers + '\n' + 'newfollowers ' + newfollowers;
-            });
+            // node.select('title').text(function (d) {
+            //     let userid = d['userid'];
+            //     let followers = d['followers'];
+            //     let unfollowers = d['unfollowers'];
+            //     let newfollowers = d['newfollowers'];
+            //     return 'userid ' + userid + '\n' + 'followers ' + followers + '\n' + 'unfollowers ' + unfollowers + '\n' + 'newfollowers ' + newfollowers;
+            // });
 
             link.attr('stroke', function (d) {  // removing class of nodes
                 svg.select("#n" + d.source.id).attr("class", undefined);
@@ -399,15 +401,17 @@ function _createSVG(width, height) {
                 });
             })
            
-            let user_info = ["userid","followers", "newfollowers", "unfollowers"];
+            let user_info = ["userid","followers", "newfollowers", "unfollowers",];
 ;
             node.on("mouseenter", (d, i) => {
-                user_info_panel.style("visibility","visible");
                 for(let i=0;i<user_info_labels.length;i++){
-                    let y = user_info[i];
-                    user_info_labels_text[i].text(user_info_labels[i] + " " + d[y]);
-                    user_info_labels_text[i].append("br");
-                    
+                    if(d["cluster"]==0){
+                        user_info_panel.style("visibility","visible");
+                        let y = user_info[i];
+                        console.log(y);
+                        user_info_labels_text[i].text(user_info_labels[i] + " " + d[y]);
+                        user_info_labels_text[i].append("br");
+                    }
                 }
                 svg.selectAll("." + d.className).attr("opacity", 1);
             })
@@ -416,12 +420,8 @@ function _createSVG(width, height) {
                     let x = d.id;
                     let c = d3.select("#n" + x).attr('class').toString();
                     d3.selectAll("." + c).attr("opacity", 0.5);
-                    
-                    // user_info_panel_para.remove();
                 })
-                .on('dbclick', () => {
-                    console.log("dbclick");
-                });
+               
 
             simulation.on("tick", tick);
 
@@ -480,11 +480,40 @@ function _createSVG(width, height) {
                 info_labels_text[i].text(info_labels[i] + " " + graph_details[i]);
             }
 
-
             node.attr("r", function (d, i) {
                 d.radius = (new_node["l" + d.userid] == undefined) ? 0 : new_node["l" + d.userid].radius;
                 return (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : null;
             })
+
+
+            let user_info = ["userid","followers", "newfollowers", "unfollowers",];
+;
+            node.on("mouseenter", (d, i) => {
+                        let y = user_info[0];
+                        let x=d[y];
+                        let f=0;
+                        for(let i=0;i<nodes.length;i++){
+                            if(nodes[i]['userid']==x){
+                                f=nodes[i]['newfollowers']
+                            }
+                        }
+                for(let i=0;i<user_info_labels.length;i++){
+                    if(d["cluster"]==0){
+                        user_info_panel.style("visibility","visible");
+                        // let y = user_info[i];
+                        // console.log(d[y]);
+                        user_info_labels_text[i].text(user_info_labels[i] + " " + f);
+                        user_info_labels_text[i].append("br");
+                    }
+                }
+                svg.selectAll("." + d.className).attr("opacity", 1);
+            })
+                .on("mouseleave", (d, i) => {
+                    user_info_panel.style("visibility","hidden");
+                    let x = d.id;
+                    let c = d3.select("#n" + x).attr('class').toString();
+                    d3.selectAll("." + c).attr("opacity", 0.5);
+                })
 
             link.attr('stroke', function (d2) {
                 if (d2 != undefined) {

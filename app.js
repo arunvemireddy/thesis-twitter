@@ -7,7 +7,7 @@ const url = "mongodb://127.0.0.1:27017";
 const dbName = "TWI";
 // const collectionName1 ="w_nodes";
 // const collectionName2 ="w_edges";
-const collectionName3 = "th_final";
+const collectionName3 = "large_data";
 const MongoClient = require('mongodb').MongoClient;
 const client = new MongoClient(url);
 let collection_nodes;

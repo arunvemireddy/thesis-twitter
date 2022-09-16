@@ -39,6 +39,7 @@
 
     #visdiv{
         position: relative;
+        /* flex-direction: column; */
     }
 
     .svgMenu{
@@ -73,6 +74,7 @@
         position: absolute;
         margin: 40px 0px 0px 0px;
         padding: 10px 20px 10px 20px;
+        visibility: hidden;
     }
 
     .active, .accordion:hover {
@@ -82,9 +84,11 @@
     .info_panel {
         position: absolute;
         padding: 0 18px;
-        display: none;
+        display: block;
         background: rgba(255, 255, 255, 0);
         top: 75px;
+       
+        outline: dashed;
     }
 
     .user_info_panel{
@@ -92,7 +96,8 @@
         padding: 0 18px;
         visibility: hidden;
         background: rgba(255, 255, 255, 0);
-        top: 150px;
+        top: 190px;
+        outline: dashed;
     }
 
     .button{

@@ -487,23 +487,31 @@ function _createSVG(width, height) {
 
 
             let user_info = ["userid","followers", "newfollowers", "unfollowers",];
-;
+            let us = ['user','f','nf','un'];
             node.on("mouseenter", (d, i) => {
                         let y = user_info[0];
                         let x=d[y];
-                        let f=0;
+                        let f;
+                        let un;
+                        let nf;
                         for(let i=0;i<nodes.length;i++){
                             if(nodes[i]['userid']==x){
-                                f=nodes[i]['newfollowers']
+                                us[1]=nodes[i]['followers'];
+                                us[2]=nodes[i]['newfollowers'];
+                                us[3]=nodes[i]['unfollowers'];
                             }
                         }
                 for(let i=0;i<user_info_labels.length;i++){
                     if(d["cluster"]==0){
                         user_info_panel.style("visibility","visible");
-                        // let y = user_info[i];
-                        // console.log(d[y]);
-                        user_info_labels_text[i].text(user_info_labels[i] + " " + f);
-                        user_info_labels_text[i].append("br");
+                        let y = user_info[i];
+                        if(i==0){
+                            user_info_labels_text[i].text(user_info_labels[i] + " " + d[y]);
+                            user_info_labels_text[i].append("br"); 
+                        }else{
+                            user_info_labels_text[i].text(user_info_labels[i] + " " + us[i]);
+                            user_info_labels_text[i].append("br");
+                        }
                     }
                 }
                 svg.selectAll("." + d.className).attr("opacity", 1);

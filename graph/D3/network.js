@@ -168,9 +168,13 @@ function _createSVG(width, height) {
 
     simulation.on("tick", tick);
 
+    /** forced layout */
+    let groups;
+    let node;
+    let link;
+
     function tick() {
-        new_tick();
-        // updateGroups();
+        // new_tick();
     }
     function new_tick() {
 
@@ -200,22 +204,10 @@ function _createSVG(width, height) {
         //     .style('stroke', 'black');
     }
 
-
-
-    /** forced layout */
-    let groups = svg.append('g').attr('class', 'groups');
-    let node = svg.append("g").selectAll("circle").attr("class", "nodes"); // create nodes
-    let link = svg.append("g").selectAll("line").attr("class", "links"); // create links
-
-
     function filterGroup(nodes, links) {
-        let groupIds = [];  // make groupId's empty 
+        let groupIds = [];
         let n = [];
         let l = [];
-
-        // links.forEach(function(d,i){
-        //     console.log(d.arrow==false?d.arrow:NaN);
-        // })
 
         links.forEach(function (d, i) { // assigning group to nodes using links
             let idx1 = nodes.findIndex(n => n.id == d.source);
@@ -235,7 +227,6 @@ function _createSVG(width, height) {
                 };
             })
             .filter(function (group) {
-                // console.log(group);
                 return group.count > 4;
             })
             .map(function (group) { return group.groupId; });
@@ -265,7 +256,6 @@ function _createSVG(width, height) {
         return [n, l, groupIds];
     }
 
-
     function calculateInfo(n) {
         let total_users = 0;
         let total_followers = 0;
@@ -277,7 +267,6 @@ function _createSVG(width, height) {
         }
         return [total_users, total_followers, total_newfollowers, total_unfollowers];
     }
-
 
     function polygonGenerator(groupId) {  // create polygon around cluster
         var node_coords = node
@@ -306,9 +295,18 @@ function _createSVG(width, height) {
         })
     }
 
-    /** init */
     return Object.assign(svg.node(), {
+        /** initialize graph */
         init({ nodes, links }) {
+
+            d3.selectAll(".groups"+temp).remove();
+            d3.selectAll(".nodes"+temp).remove();
+            d3.selectAll(".links"+temp).remove();
+
+            groups = svg.append('g').attr('class', 'groups'+temp);
+            node = svg.append("g").attr("class", "nodes"+temp).selectAll("circle"); // create nodes
+            link = svg.append("g").attr("class", "links"+temp).selectAll("line"); // create links
+
             d3.selectAll("#tesvg" + temp).remove();    // remove text - user's info
             d3.selectAll("#pathsvg" + temp).remove();  // removing old polygons
 
@@ -320,7 +318,6 @@ function _createSVG(width, height) {
                 updateGroups();
             });
 
-
             let result = filterGroup(nodes, links);
             let n = result[0];
             let l = result[1];
@@ -329,6 +326,7 @@ function _createSVG(width, height) {
             let graph_details = calculateInfo(n);
             info_panel_para.remove();
             info_panel_para = info_panel.append("p")
+
             for (let i = 0; i < 4; i++) {
                 info_labels_text[i] = info_panel_para.append("text").attr("id", "tesvg" + info_labels[i] + temp).text(info_labels[i] + " " + graph_details[i]);
                 info_panel_para.append("br");
@@ -383,8 +381,6 @@ function _createSVG(width, height) {
                 }
             })
 
-
-
             node.on("click", (event, d) => {
                 setTemp(node.attr("value"));
                 console.log("tets");
@@ -401,7 +397,7 @@ function _createSVG(width, height) {
                 });
             })
            
-            let user_info = ["userid","followers", "newfollowers", "unfollowers",];
+            let user_info = ["userid","followers", "newfollowers", "unfollowers"];
 ;
             node.on("mouseenter", (d, i) => {
                 for(let i=0;i<user_info_labels.length;i++){
@@ -422,7 +418,6 @@ function _createSVG(width, height) {
                     d3.selectAll("." + c).attr("opacity", 0.5);
                 })
                
-
             simulation.on("tick", tick);
 
             let paths = groups.selectAll('.path_placeholder')
@@ -447,9 +442,7 @@ function _createSVG(width, height) {
                     exit => exit.remove()
                 );
 
-            paths.transition()
-                .duration(2000)
-                .attr("opacity", 1);
+            paths.transition().duration(2000).attr("opacity", 1);
 
 
             function tick() {
@@ -457,6 +450,7 @@ function _createSVG(width, height) {
                 drawPolygons(groupIds, paths);
             }
         },
+        /* update graph*/
         update({ nodes, links }) {
 
             let result = filterGroup(nodes, links);
@@ -484,7 +478,6 @@ function _createSVG(width, height) {
                 d.radius = (new_node["l" + d.userid] == undefined) ? 0 : new_node["l" + d.userid].radius;
                 return (d.radius > 0 && d.radius <= 10) ? radius[0] : (d.radius > 10 && d.radius <= 25) ? radius[1] : (d.radius > 25 && d.radius <= 50) ? radius[2] : d.radius > 50 ? radius[3] : null;
             })
-
 
             let user_info = ["userid","followers", "newfollowers", "unfollowers",];
             let us = ['user','f','nf','un'];

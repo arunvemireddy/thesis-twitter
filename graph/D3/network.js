@@ -1,4 +1,5 @@
 import { count, temp, setCount, svgId, setSvgId, setTemp, visdiv, obj, setObj, select, cluster, setCluster, radius, color, scaleFactor, colors, refresh, add } from "./index.js";
+import {idd, setId,_call,Gr,data1,data2,_apiCall} from './process.js';
 
 var innerWidth = window.innerWidth;
 var innerHeight = window.innerHeight;
@@ -6,6 +7,8 @@ var innerHeight = window.innerHeight;
 let svgRet = new _createSVG(innerWidth, innerHeight);
 setObj(0, svgRet);  // storing in object
 setTemp(0);
+
+
 
 var users = [];
 
@@ -85,9 +88,33 @@ function addSlider(vis_div) {
             d3.select("#dsvg" + temp).remove();
             console.log(obj);
         })
+
+    let input1 = div.append("input")
+                .attr("type","number")
+                .attr("placeholder","enter week number")
+                .attr("value",  1)
+                
+
+    let input2 = div.append("input")
+                .attr("type","number")
+                .attr("placeholder","enter week number")
+                .attr("value",  2)
+
+    let input3 = div.append("button")
+                 .attr("class", "button")
+                 .attr("id", "input" + svgId)
+                 .text("submit")
+                 .on("click",function(){
+                    // ca(1,2);
+                    setTemp(d3.select(this).attr('id').replace('inputsvg', ''));
+                    let w1 = input1.property("value");
+                    let w2 = input2.property("value");
+                    ca(w1,w2);
+                 })
 }
 
 function _createSVG(width, height) {
+   
     var polygon, centroid;
     let info_labels = ["Users", "Followers", "New Followers", "Unfollowers","Clusters"];
     let info_labels_text = ["Users", "Followers", "New Followers", "Unfollowers"];
@@ -103,7 +130,7 @@ function _createSVG(width, height) {
     count == undefined ? setCount(0) : setCount(count + 1);
     setSvgId("svg" + count);  // set svgId
     setTemp(count);  // set temp value
-
+    setId(count);
     let div = visdiv.append("div")
         .attr("id", "d" + svgId)
         .style("width", width)
@@ -383,7 +410,7 @@ function _createSVG(width, height) {
 
             node.on("click", (event, d) => {
                 setTemp(node.attr("value"));
-                console.log("tets");
+                // console.log("tets");
                 let group = event.group;
                 setCluster(group);
                 let nf = nodes.filter(d => d.group == group);
@@ -541,15 +568,25 @@ function _createSVG(width, height) {
 }
 
 
-_callApi(1, users);
+// _callApi(1, users);
 
-export function _callApi(w, users) {
-    console.log(w);
-    let x = _call(w, users);
+// export function _callApi(w, users) {
+//     let x = _call(w, users);
+//     x.then(function () {
+//         de(Gr);
+//     });
+// }
+
+ca(1,2);
+
+function ca(week1,week2){
+    let x = _apiCall(week1,week2);
     x.then(function () {
-        de(Gr);
+        de(data2);
+
     });
 }
+
 
 function de(data) {
     obj.forEach(function (m, n) {

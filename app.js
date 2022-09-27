@@ -7,12 +7,13 @@ const url = "mongodb://127.0.0.1:27017";
 const dbName = "TWI";
 // const collectionName1 ="w_nodes";
 // const collectionName2 ="w_edges";
-const collectionName3 = "large_data";
+const collectionName3 = "only_followers";
 const MongoClient = require('mongodb').MongoClient;
 const client = new MongoClient(url);
 let collection_nodes;
 let collection_edges;
 let collection_final_list;
+let collection_two_weeks;
 
 client.connect(function(err){
     if (err) throw err;
@@ -57,6 +58,21 @@ app.post("/getefd",(req,res)=>{
     }
     
     collection_final_list.find(query).limit(500).toArray(function(e,r){
+        if(e) throw e;
+        res.send(r);
+    })
+})
+
+
+app.post("/getTwoweeks",(req,res)=>{
+    
+    let week1 = parseInt(req.body.week1);
+    let week2 = parseInt(req.body.week2);
+    let w=[week1,week2];
+    var query;
+    query={"week":{$in:w}},{};
+    
+    collection_final_list.find(query).limit(5000).toArray(function(e,r){
         if(e) throw e;
         res.send(r);
     })

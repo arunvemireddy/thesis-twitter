@@ -139,11 +139,11 @@
     </div> -->
     <!-- <scrip src="index.js"></scrip> -->
    
-    <script src="process.js"></script>
+   
     
    
     </script>
-
+    <script type="module"   src="process.js"></script>
       <script type="module">
         import define from "./index.js";
         import { Runtime, Library, Inspector } from "./runtime.js";
@@ -151,6 +151,7 @@
         const main = runtime.module(define, Inspector.into(document.body));
     </script>
      <script type="module" src="network.js"></script>
+ 
      
 <div id="svg">
     <!-- create svg in this div -->
